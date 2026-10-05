@@ -4,7 +4,7 @@ import type { Adjustments, MatchResult, Violation } from '../../schema';
 import type { Rule } from '../types';
 
 const id = 'groupSplit';
-const severity = 'warn'; // TODO(Step 4): severity는 사용자 결정
+const severity = 'error'; // D-20
 
 // groupId마다 배치된 항목들이 놓인 슬롯의 소속 그룹(ctx.slotGroup)을 모은다. 그룹 밖(null)도 하나의 값이다.
 // 값이 2가지 이상이면 그 groupId에 위반 1개. 버려진 항목은 보지 않으므로 배치된 항목이 1개 이하면 위반이 아니다.

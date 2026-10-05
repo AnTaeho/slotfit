@@ -48,6 +48,7 @@ export const BRUTE_FORCE_MAX_ITEMS = 7; // D-17: 항목 7개 × 슬롯 6개 ≈ 
 
 // ---------- fallback ----------
 export const MAX_ITERATIONS = 5; // validate ↔ fallback 반복 상한 (spec 3.4)
+export const FONT_SHRINK_STEP = 1; // D-21: shrinkFont가 글자 크기를 한 번에 줄이는 폭(px). minFontSize 아래로는 안 내려간다
 
 // ---------- render (점수와 무관한 그림 치수) ----------
 export const RENDER_FOOTER_HEIGHT = 44; // 하단 status 표시 영역 높이(px)

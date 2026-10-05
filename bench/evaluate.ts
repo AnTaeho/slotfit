@@ -34,10 +34,15 @@ function groupSplitCount(r: PipelineResult): number {
   return r.violations.filter((v) => v.ruleId === 'groupSplit').length;
 }
 
-// 쌍별 표의 칸: status 첫 글자 + error/warn/dropped/groupSplit 수. 예: "rej e1 w0 d2 s0"
+// fallback 적용 횟수 = trace의 'fallback#' 줄 수(pipeline이 단계를 적용할 때마다 한 줄 남긴다).
+function fallbackCount(r: PipelineResult): number {
+  return r.trace.filter((line) => line.startsWith('fallback#')).length;
+}
+
+// 쌍별 표의 칸: status 앞 세 글자 + error/warn/dropped/groupSplit 수 + fallback 횟수. 예: "rej e1 w0 d2 s0 f1"
 function cell(r: PipelineResult): string {
   const e = errorCount(r);
-  return `${r.status.slice(0, 3)} e${e} w${r.violations.length - e} d${r.dropped.length} s${groupSplitCount(r)}`;
+  return `${r.status.slice(0, 3)} e${e} w${r.violations.length - e} d${r.dropped.length} s${groupSplitCount(r)} f${fallbackCount(r)}`;
 }
 
 function evaluate(entry: RegistryEntry, pairs: Pair[], cells: PairCell): string[] {
@@ -132,6 +137,7 @@ function main(): void {
     `- 템플릿 ${templates.length} × 콘텐츠 ${contents.length} = ${pairs.length}쌍, golden ${goldenPairs}쌍`,
     '- goldenMatch: golden이 있는 쌍에서 정답과 일치하는 슬롯 비율. 모양이 같은 카드끼리 통째로 바꾼 배치도 정답(D-7)',
     '- errors / warns / p1Dropped / groupSplit: 전체 쌍의 합. 미구현 지표는 "-"',
+    '- status는 fallback(shrinkFont → dropLowPriority) 이후 기준(D-22). dropped에는 fallback이 버린 항목도 들어간다',
     '- ms: 쌍 하나를 한 번 실행한 시간의 평균',
     '- bruteForce는 oracle 전용(tests/oracle.test.ts에서만 실행)이라 "-"로 둔다(D-17)',
     '',
@@ -139,7 +145,7 @@ function main(): void {
     '',
     '## 쌍별 결과',
     '',
-    '- 칸: status(acc/deg/rej) e=error 수 w=warn 수 d=dropped 수 s=groupSplit 수, g=golden 맞은 슬롯/전체. ★ = golden 있는 쌍',
+    '- 칸: status(acc/deg/rej) e=error 수 w=warn 수 d=dropped 수 s=groupSplit 수 f=fallback 적용 횟수, g=golden 맞은 슬롯/전체. ★ = golden 있는 쌍',
     '',
     pairTable(pairs, REGISTRY.filter((e) => e.implemented && e.oracleOnly !== true), cells),
     '',
