@@ -1,0 +1,13 @@
+{
+  "id": "c07-exhibition",
+  "description": "사진 2장과 캡션이 짝(groupId)을 이루는 전시 안내. 이미지 슬롯이 1개뿐인 템플릿에서는 이미지가 남는다",
+  "items": [
+    { "id": "title", "kind": "text", "roleHint": "title", "text": "봄 사진전: 도시의 빛", "priority": 1 },
+    { "id": "sub", "kind": "text", "roleHint": "subtitle", "text": "4월 1일 ~ 4월 30일", "priority": 2 },
+    { "id": "cap-a", "kind": "text", "roleHint": "caption", "text": "새벽의 한강", "groupId": "ga", "priority": 3 },
+    { "id": "img-a", "kind": "image", "roleHint": "image", "groupId": "ga", "priority": 2 },
+    { "id": "img-b", "kind": "image", "roleHint": "image", "groupId": "gb", "priority": 2 },
+    { "id": "cap-b", "kind": "text", "roleHint": "caption", "text": "골목의 오후", "groupId": "gb", "priority": 3 },
+    { "id": "body", "kind": "text", "roleHint": "body", "text": "서울 곳곳의 빛을 담은 사진 40점을 전시합니다. 입장 무료", "priority": 2 }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "id": "t08-gallery-pairs",
+  "description": "제목 + 사진 카드 2장(이미지/캡션). 이미지와 캡션이 짝을 이루는 그룹 확인용",
+  "root": {
+    "id": "root", "type": "frame", "box": { "x": 0, "y": 0, "w": 600, "h": 420 },
+    "children": [
+      { "id": "title", "type": "text", "role": "title",
+        "box": { "x": 40, "y": 30, "w": 520, "h": 56 }, "fontSize": 30, "minFontSize": 22, "maxLines": 1 },
+      { "id": "photoA", "type": "group", "box": { "x": 40, "y": 110, "w": 250, "h": 270 }, "children": [
+        { "id": "photoA-img", "type": "image", "role": "image", "box": { "x": 50, "y": 120, "w": 230, "h": 200 } },
+        { "id": "photoA-cap", "type": "text", "role": "caption",
+          "box": { "x": 50, "y": 330, "w": 230, "h": 36 }, "fontSize": 13, "minFontSize": 10, "maxLines": 2 }
+      ]},
+      { "id": "photoB", "type": "group", "box": { "x": 310, "y": 110, "w": 250, "h": 270 }, "children": [
+        { "id": "photoB-img", "type": "image", "role": "image", "box": { "x": 320, "y": 120, "w": 230, "h": 200 } },
+        { "id": "photoB-cap", "type": "text", "role": "caption",
+          "box": { "x": 320, "y": 330, "w": 230, "h": 36 }, "fontSize": 13, "minFontSize": 10, "maxLines": 2 }
+      ]}
+    ]
+  }
+}

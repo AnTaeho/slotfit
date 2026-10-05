@@ -1,0 +1,11 @@
+{
+  "id": "c08-text-only",
+  "description": "이미지 없이 글만 있는 음악회 안내(이미지 없음). 소제목이 제목보다 먼저 온다",
+  "items": [
+    { "id": "sub", "kind": "text", "roleHint": "subtitle", "text": "10월 18일 토요일 저녁 7시", "priority": 2 },
+    { "id": "title", "kind": "text", "roleHint": "title", "text": "가을 음악회", "priority": 1 },
+    { "id": "body", "kind": "text", "roleHint": "body", "text": "시민회관 대공연장에서 오케스트라와 함께하는 가을 저녁. 전석 무료, 선착순 입장", "priority": 2 },
+    { "id": "host", "kind": "text", "roleHint": "caption", "text": "주최: 시민문화재단", "priority": 3 },
+    { "id": "notice", "kind": "text", "roleHint": "caption", "text": "주차 공간이 없으니 대중교통을 이용해 주세요", "priority": 3 }
+  ]
+}

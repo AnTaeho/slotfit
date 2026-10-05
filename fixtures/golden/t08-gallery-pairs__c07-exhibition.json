@@ -1,0 +1,12 @@
+{
+  "templateId": "t08-gallery-pairs",
+  "contentId": "c07-exhibition",
+  "assignment": [
+    { "slotId": "title", "contentId": "title" },
+    { "slotId": "photoA-img", "contentId": "img-a" },
+    { "slotId": "photoA-cap", "contentId": "cap-a" },
+    { "slotId": "photoB-img", "contentId": "img-b" },
+    { "slotId": "photoB-cap", "contentId": "cap-b" }
+  ],
+  "note": "사진과 그 사진의 캡션은 같은 카드에 있어야 한다. 소제목(기간)과 본문은 자리가 없어 버린다. 카드 A/B 교환은 정답(D-7)"
+}

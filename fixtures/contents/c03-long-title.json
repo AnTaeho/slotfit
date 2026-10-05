@@ -1,0 +1,10 @@
+{
+  "id": "c03-long-title",
+  "description": "한 줄 제목 칸에 안 들어가는 긴 제목(긴 제목). 제목 칸 maxLines·minFontSize에 따라 결과가 갈린다",
+  "items": [
+    { "id": "title", "kind": "text", "roleHint": "title", "text": "창립 30주년 기념 전 품목 최대 70% 할인 감사 대축제", "priority": 1 },
+    { "id": "sub", "kind": "text", "roleHint": "subtitle", "text": "단 3일간", "priority": 2 },
+    { "id": "body", "kind": "text", "roleHint": "body", "text": "10월 10일부터 12일까지 온라인몰과 전국 매장에서 동시에 진행합니다", "priority": 2 },
+    { "id": "note", "kind": "text", "roleHint": "caption", "text": "일부 품목 제외", "priority": 3 }
+  ]
+}

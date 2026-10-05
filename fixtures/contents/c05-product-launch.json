@@ -1,0 +1,16 @@
+{
+  "id": "c05-product-launch",
+  "description": "제품 3종 카드(이미지/소제목/설명), 순서가 뒤섞임. 이미지가 든 카드형(groupId)",
+  "items": [
+    { "id": "p3-img", "kind": "image", "roleHint": "image", "groupId": "p3", "priority": 2 },
+    { "id": "p1-sub", "kind": "text", "roleHint": "subtitle", "text": "무선 이어폰", "groupId": "p1", "priority": 2 },
+    { "id": "title", "kind": "text", "roleHint": "title", "text": "가을 신제품 3종", "priority": 1 },
+    { "id": "p1-body", "kind": "text", "roleHint": "body", "text": "노이즈 캔슬링과 30시간 재생, 가벼운 5g 무게", "groupId": "p1", "priority": 2 },
+    { "id": "p2-img", "kind": "image", "roleHint": "image", "groupId": "p2", "priority": 2 },
+    { "id": "p1-img", "kind": "image", "roleHint": "image", "groupId": "p1", "priority": 2 },
+    { "id": "p2-sub", "kind": "text", "roleHint": "subtitle", "text": "스마트 워치", "groupId": "p2", "priority": 2 },
+    { "id": "p3-sub", "kind": "text", "roleHint": "subtitle", "text": "보조 배터리", "groupId": "p3", "priority": 2 },
+    { "id": "p2-body", "kind": "text", "roleHint": "body", "text": "심박·수면 측정, 방수 5ATM", "groupId": "p2", "priority": 2 },
+    { "id": "p3-body", "kind": "text", "roleHint": "body", "text": "20000mAh 대용량, 노트북까지 고속 충전", "groupId": "p3", "priority": 3 }
+  ]
+}
