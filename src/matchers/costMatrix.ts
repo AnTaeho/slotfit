@@ -15,15 +15,24 @@
 // a→S, b→dummy, dummy→dummy 이면 「a를 S에 넣고 b는 버림」, 합 = cost(a,S) + 10.
 // dummy 항목이 S를 고르면 S는 비고, 그때 a·b는 둘 다 버려진다.
 import type { MatchContext } from '../context';
-import type { Assignment, MatchResult } from '../schema';
+import type { Assignment, ContentItem, MatchResult, Slot } from '../schema';
 import { cost, DUMMY_ITEM_COST, DUMMY_SLOT_COST } from '../scoring/cost';
 import { FORBIDDEN_COST } from '../scoring/weights';
 
 export type CostMatrix = { matrix: number[][]; nItems: number; nSlots: number };
 
 export function buildCostMatrix(ctx: MatchContext): CostMatrix {
-  const items = ctx.content.items;
-  const slots = ctx.slots;
+  return buildSubsetCostMatrix(ctx, ctx.content.items, ctx.slots);
+}
+
+// 항목 부분집합 × 슬롯 부분집합으로 같은 모양의 행렬을 만든다(hierarchical의 하위 문제용).
+// 행·열 순서는 넘겨받은 배열 순서를 따른다. cost()는 전체 ctx 기준이므로
+// 순서 항의 상대 위치도 부분집합이 아니라 전체 항목·슬롯 안의 위치로 잰다.
+export function buildSubsetCostMatrix(
+  ctx: MatchContext,
+  items: readonly ContentItem[],
+  slots: readonly Slot[],
+): CostMatrix {
   const nItems = items.length;
   const nSlots = slots.length;
 

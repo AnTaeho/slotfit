@@ -1,0 +1,15 @@
+{
+  "id": "t09-single-card",
+  "description": "카드 한 장뿐인 템플릿. 계층 매칭이 전역 최적이 아닌 반례용",
+  "root": {
+    "id": "root", "type": "frame", "box": { "x": 0, "y": 0, "w": 600, "h": 320 },
+    "children": [
+      { "id": "card", "type": "group", "box": { "x": 40, "y": 40, "w": 520, "h": 240 }, "children": [
+        { "id": "card-sub", "type": "text", "role": "subtitle",
+          "box": { "x": 60, "y": 60, "w": 480, "h": 40 }, "fontSize": 22, "minFontSize": 16, "maxLines": 1 },
+        { "id": "card-body", "type": "text", "role": "body",
+          "box": { "x": 60, "y": 116, "w": 480, "h": 140 }, "fontSize": 18, "minFontSize": 13, "maxLines": 3 }
+      ]}
+    ]
+  }
+}

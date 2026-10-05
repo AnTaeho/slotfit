@@ -1,0 +1,9 @@
+{
+  "id": "c09-title-and-card",
+  "description": "제목 + 카드 한 장. 카드가 자리를 다 차지해 계층 매칭은 제목을 버린다(전역 최적 아님)",
+  "items": [
+    { "id": "title", "kind": "text", "roleHint": "title", "text": "겨울 특가", "priority": 1 },
+    { "id": "g1-sub", "kind": "text", "roleHint": "subtitle", "text": "핫초코", "groupId": "g1", "priority": 2 },
+    { "id": "g1-body", "kind": "text", "roleHint": "body", "text": "12월 한 달간 모든 핫초코 1+1", "groupId": "g1", "priority": 2 }
+  ]
+}

@@ -14,7 +14,7 @@ export const REGISTRY: RegistryEntry[] = [
   { matcher: greedy, implemented: true },
   { matcher: bruteForce, implemented: true, oracleOnly: true }, // D-17: bench·render:all에서 뺀다
   { matcher: hungarian, implemented: true },
-  { matcher: hierarchical, implemented: false }, // TODO(Step 3): 구현 후 true로 바꾼다.
+  { matcher: hierarchical, implemented: true },
 ];
 
 export function findMatcher(name: string): RegistryEntry | undefined {
