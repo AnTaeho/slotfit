@@ -124,7 +124,8 @@ fixtures/contents/*.json ──┘                            │
 ```
 slotfit/
 ├─ spec.md                    # 이 문서
-├─ CLAUDE.md                  # "spec.md를 먼저 읽을 것" 한 줄
+├─ CLAUDE.md                  # 작업 지침 (브랜치·커밋·결정 규칙)
+├─ docs/handoff.md            # 이어받는 세션용 지시서
 ├─ README.md                  # Step 5에서 작성
 ├─ package.json / tsconfig.json / vitest.config.ts
 ├─ src/
@@ -541,10 +542,13 @@ README 구성:
 | D-3 | 줄 수 = 문단 너비 ÷ 슬롯 폭을 올림 (Claude 결정, Step 0) | 너비 나눗셈 / 단어 단위 줄바꿈 / 글자 단위 줄바꿈 | 손으로 검산하기 쉽다. 단어가 줄 끝에서 잘리는 경우를 무시하므로 실제보다 줄 수가 적게 나올 수 있음 |
 | D-4 | 미구현 matcher는 레지스트리의 `implemented` 플래그로 표시 (Claude 결정, Step 0) | 플래그 / `match()` 예외를 잡아 skip | `Matcher` 인터페이스를 그대로 둔다. 예외를 잡으면 진짜 버그도 skip으로 숨는다 |
 | D-5 | fixture 스키마를 spec보다 엄격하게 (Claude 결정, Step 0) | strict / 느슨 | 모르는 키·중복 id·0 이하 치수를 로드 시점에 막는다. fixture 오타가 조용히 통과하지 않음 |
-| D-6 | **임시** — golden은 정확 일치, 이미지는 타입만, bench의 groupSplit은 "-" | Step 0 「결정 필요」 1·2 참조 | 사용자 결정 대기. 결정되면 이 행을 교체한다 |
+| D-6 | 이미지 슬롯·콘텐츠를 fixture에 실제로 넣는다 (사용자 결정, 2026-10-05) | 글만 / fixture에 포함 | 학습용이기도 해서 다양한 상황을 담는다. 비율 맞춤 같은 이미지 고유 규칙은 없음 |
+| D-7 | golden 비교는 모양이 같은 카드끼리 통째로 교환한 배치도 정답으로 본다 (사용자 결정, 2026-10-05) | 카드 교환 허용 / 정확 일치 | 카드 순서만 다른 올바른 배치를 틀렸다고 세지 않는다. 비교 코드가 조금 복잡해짐 |
+| D-8 | roleHint가 없는 콘텐츠는 역할 미상으로 둔다 (사용자 결정, 2026-10-05) | 미상 / 길이로 추정 | 추정을 코드에 숨기지 않고 cost 항목으로 자리를 찾게 한다. 배치 품질은 떨어질 수 있음 |
+| D-9 | error 없이 warn이 1개라도 있으면 degraded (사용자 결정, 2026-10-05, Step 4에서 재확정) | warn 1개부터 / 임계값 | 기준이 한 문장. warn 1건과 5건이 같은 등급 |
 
 ## 부록 C. 진행 상황
 
 - 현재 Step: 0 완료 (2026-10-05)
 - 마지막 작업: 뼈대 + greedy end-to-end. `pnpm test` 통과 8 / skip 12, `pnpm typecheck` 오류 0, t01×c01×greedy는 rejected(cardA-sub overflow 1건), bench greedy goldenMatch 0.40
-- 다음 할 일: Step 0 「결정 필요」 4건을 사용자가 고른다 → Step 1 (fixture 8+8, 🙋 golden 5쌍)
+- 다음 할 일: Step 1 (fixture 8+8, 🙋 golden 5쌍). 브랜치 `step-1-fixtures`. 이어받는 세션은 `docs/handoff.md`를 읽는다
