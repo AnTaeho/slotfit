@@ -65,6 +65,7 @@ th { font-weight: 600; color: var(--muted); white-space: nowrap; }
 .tag.warn { background: var(--warn-soft); color: var(--warn); }
 figure { margin: 0; display: flex; flex-direction: column; gap: 8px; }
 figure .frame { background: #ffffff; border: 1px solid var(--line); border-radius: 6px; padding: 12px; overflow-x: auto; }
+figure .frame.diagram { background: var(--surface); }
 figure svg { max-width: 100%; height: auto; display: block; margin-inline: auto; }
 figcaption { color: var(--muted); font-size: .88rem; }
 nav ol { columns: 2; column-gap: 32px; display: block; }
@@ -91,6 +92,7 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     <div class="note"><strong>읽는 법.</strong> 앞부분(Step 0)은 뼈대와 공통 개념입니다. 그 뒤 Step 1~4 장은 각각 「무엇을 왜 만들었나 → 읽을 파일 → 예시로 따라가기 → 결과」 순서입니다. Step 0 장의 숫자(테스트 8개, goldenMatch 0.40 등)는 Step 0이 끝났을 때의 값이고, 최종 값은 「마지막 수치」 장에 있습니다.</div>
     <nav aria-label="목차">
       <ol>
+        <li><a href="#arch">전체 구조 한눈에 보기</a></li>
         <li><a href="#what">Step 0 — 뼈대</a></li>
         <li><a href="#words">먼저 알아 둘 말 일곱 개</a></li>
         <li><a href="#flow">입력에서 결과까지 한 바퀴</a></li>
@@ -110,6 +112,114 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     </nav>
   </section>
 </header>
+
+<section id="arch">
+  <h2>전체 구조 한눈에 보기</h2>
+  <p>SlotFit은 서버 없이 명령 한 번으로 도는 라이브러리입니다. 그래서 「서비스 아키텍처」는 데이터가 어느 파일을 어떤 순서로 지나가는가로 그릴 수 있습니다. 가운데 점선 상자 안은 파일을 읽거나 쓰지 않는 순수 함수이고, 상자 밖에서만 파일을 읽고 씁니다.</p>
+  <figure>
+    <div class="frame diagram">
+    <svg viewBox="0 0 980 492" role="img" aria-label="fixture JSON을 loader가 읽어 MatchContext를 만들고, matcher가 cost 점수로 배치하고, validate와 fallback이 최대 5번 주고받은 뒤 decideStatus가 판정해 render와 bench로 내보내는 구조" font-family="IBM Plex Sans KR, sans-serif" font-size="13" style="color: var(--ink)">
+      <defs>
+        <marker id="arch-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
+        <marker id="arch-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill: var(--accent)"/></marker>
+      </defs>
+
+      <!-- 순수 함수 경계 -->
+      <rect x="360" y="16" width="604" height="352" rx="8" fill="none" stroke="currentColor" stroke-dasharray="6 5" opacity="0.55"/>
+      <text x="376" y="38" font-size="12" font-weight="600" style="fill: var(--muted)">순수 함수 · pipeline.ts의 run() 한 번</text>
+
+      <!-- 파일 입력 -->
+      <rect x="20" y="60" width="150" height="96" rx="6" fill="none" stroke="currentColor"/>
+      <text x="95" y="84" text-anchor="middle" font-weight="600" fill="currentColor">fixtures/*.json</text>
+      <text x="95" y="106" text-anchor="middle" fill="currentColor">templates 9</text>
+      <text x="95" y="124" text-anchor="middle" fill="currentColor">contents 11</text>
+      <text x="95" y="142" text-anchor="middle" fill="currentColor">golden 5</text>
+
+      <rect x="200" y="72" width="130" height="72" rx="6" fill="none" stroke="currentColor"/>
+      <text x="265" y="102" text-anchor="middle" font-weight="600" fill="currentColor">io/loader.ts</text>
+      <text x="265" y="122" text-anchor="middle" style="fill: var(--muted)">zod 스키마 검사</text>
+
+      <line x1="170" y1="108" x2="198" y2="108" stroke="currentColor" marker-end="url(#arch-arrow)"/>
+
+      <!-- 준비 -->
+      <rect x="380" y="72" width="150" height="72" rx="6" fill="none" stroke="currentColor"/>
+      <text x="455" y="102" text-anchor="middle" font-weight="600" fill="currentColor">context.ts</text>
+      <text x="455" y="122" text-anchor="middle" style="fill: var(--muted)">MatchContext 꾸러미</text>
+      <line x1="330" y1="108" x2="378" y2="108" stroke="currentColor" marker-end="url(#arch-arrow)"/>
+      <text x="354" y="98" text-anchor="middle" font-size="11" style="fill: var(--muted)">템플릿·콘텐츠</text>
+
+      <rect x="380" y="170" width="150" height="72" rx="6" fill="none" stroke="currentColor"/>
+      <text x="455" y="200" text-anchor="middle" font-weight="600" fill="currentColor">scoring/cost.ts</text>
+      <text x="455" y="220" text-anchor="middle" style="fill: var(--muted)">숫자는 weights.ts</text>
+
+      <!-- matcher -->
+      <rect x="570" y="56" width="210" height="150" rx="6" fill="none" stroke="currentColor"/>
+      <text x="675" y="80" text-anchor="middle" font-weight="600" fill="currentColor">Matcher.match(ctx)</text>
+      <line x1="582" y1="90" x2="768" y2="90" stroke="currentColor" opacity="0.3"/>
+      <text x="590" y="110" fill="currentColor">greedy · 입력 순서대로</text>
+      <text x="590" y="132" fill="currentColor">hungarian · 점수 합 최소</text>
+      <text x="590" y="154" font-weight="600" style="fill: var(--accent)">hierarchical · 카드 먼저</text>
+      <text x="590" y="176" style="fill: var(--muted)">bruteForce · 테스트 전용</text>
+      <text x="590" y="196" font-size="11" style="fill: var(--muted)">공통 엔진: solveAssignment()</text>
+      <line x1="530" y1="108" x2="568" y2="108" stroke="currentColor" marker-end="url(#arch-arrow)"/>
+      <text x="549" y="98" text-anchor="middle" font-size="11" style="fill: var(--muted)">ctx</text>
+      <line x1="530" y1="200" x2="568" y2="200" stroke="currentColor" marker-end="url(#arch-arrow)"/>
+      <text x="549" y="190" text-anchor="middle" font-size="11" style="fill: var(--muted)">짝 점수</text>
+
+      <!-- 검사와 대응 -->
+      <rect x="570" y="262" width="210" height="72" rx="6" fill="none" stroke="currentColor"/>
+      <text x="675" y="292" text-anchor="middle" font-weight="600" fill="currentColor">validation/validate.ts</text>
+      <text x="675" y="312" text-anchor="middle" style="fill: var(--muted)">규칙 5개 → 위반 목록</text>
+      <line x1="675" y1="206" x2="675" y2="260" stroke="currentColor" marker-end="url(#arch-arrow)"/>
+      <text x="683" y="238" font-size="11" style="fill: var(--muted)">MatchResult</text>
+
+      <rect x="380" y="262" width="150" height="72" rx="6" fill="none" style="stroke: var(--accent)"/>
+      <text x="455" y="292" text-anchor="middle" font-weight="600" fill="currentColor">fallback/</text>
+      <text x="455" y="312" text-anchor="middle" style="fill: var(--muted)">글자 줄이기 → 버리기</text>
+      <line x1="570" y1="284" x2="532" y2="284" style="stroke: var(--accent)" marker-end="url(#arch-arrow-accent)"/>
+      <text x="551" y="278" text-anchor="middle" font-size="11" style="fill: var(--accent)">error</text>
+      <line x1="530" y1="316" x2="568" y2="316" style="stroke: var(--accent)" marker-end="url(#arch-arrow-accent)"/>
+      <text x="549" y="332" text-anchor="middle" font-size="11" style="fill: var(--accent)">재검사</text>
+      <text x="455" y="356" text-anchor="middle" font-size="11" style="fill: var(--accent)">최대 5번 반복 · trace에 기록</text>
+
+      <rect x="810" y="262" width="140" height="72" rx="6" fill="none" stroke="currentColor"/>
+      <text x="880" y="292" text-anchor="middle" font-weight="600" fill="currentColor">decideStatus()</text>
+      <text x="880" y="312" text-anchor="middle" style="fill: var(--muted)">합격 · 흠 · 거절</text>
+      <line x1="780" y1="298" x2="808" y2="298" stroke="currentColor" marker-end="url(#arch-arrow)"/>
+
+      <!-- 출력 -->
+      <rect x="630" y="410" width="150" height="72" rx="6" fill="none" stroke="currentColor"/>
+      <text x="705" y="440" text-anchor="middle" font-weight="600" fill="currentColor">render/svg.ts</text>
+      <text x="705" y="460" text-anchor="middle" style="fill: var(--muted)">→ out/*.svg</text>
+      <rect x="810" y="410" width="150" height="72" rx="6" fill="none" stroke="currentColor"/>
+      <text x="885" y="440" text-anchor="middle" font-weight="600" fill="currentColor">bench/evaluate.ts</text>
+      <text x="885" y="460" text-anchor="middle" style="fill: var(--muted)">golden과 비교 → .md</text>
+      <line x1="885" y1="334" x2="885" y2="408" stroke="currentColor" marker-end="url(#arch-arrow)"/>
+      <polyline points="840,334 840,388 705,388 705,408" fill="none" stroke="currentColor" marker-end="url(#arch-arrow)"/>
+      <text x="772" y="382" text-anchor="middle" font-size="11" style="fill: var(--muted)">PipelineResult</text>
+
+      <!-- 테스트 -->
+      <rect x="20" y="262" width="150" height="72" rx="6" fill="none" stroke="currentColor"/>
+      <text x="95" y="292" text-anchor="middle" font-weight="600" fill="currentColor">tests/</text>
+      <text x="95" y="312" text-anchor="middle" style="fill: var(--muted)">fast-check 무작위 입력</text>
+      <line x1="170" y1="298" x2="356" y2="298" stroke="currentColor" stroke-dasharray="3 4" marker-end="url(#arch-arrow)"/>
+      <text x="265" y="290" text-anchor="middle" font-size="11" style="fill: var(--muted)">invariant · oracle 검사</text>
+    </svg>
+    </div>
+    <figcaption>입력 JSON은 loader에서 한 번 검사된 뒤 순수 함수 영역으로 들어갑니다. matcher는 cost 점수로 배치를 만들고, validate와 fallback(파란 고리)이 최대 5번 주고받은 뒤 decideStatus가 판정합니다. 결과는 render(그림 한 장)와 bench(전체 비교표)로만 파일이 됩니다.</figcaption>
+  </figure>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>층</th><th>폴더</th><th>규칙</th></tr></thead>
+    <tbody>
+      <tr><td>입출력</td><td><code>io/</code>, <code>scripts/</code>, <code>bench/</code></td><td>파일을 읽고 쓰는 곳은 여기뿐입니다.</td></tr>
+      <tr><td>데이터 모양</td><td><code>schema/</code>, <code>tree/</code>, <code>context.ts</code></td><td>타입과 zod 스키마, 트리 순회, 한 번 계산해 두는 꾸러미입니다.</td></tr>
+      <tr><td>판단</td><td><code>scoring/</code>, <code>matchers/</code>, <code>validation/</code>, <code>fallback/</code></td><td>모두 순수 함수입니다. 받은 값을 바꾸지 않고 새 값을 돌려줍니다. 조절하는 숫자는 <code>weights.ts</code> 한 곳에만 있습니다.</td></tr>
+      <tr><td>잇기</td><td><code>pipeline.ts</code></td><td>위 판단을 순서대로 부르고 <code>trace</code>에 기록합니다.</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
 
 <section id="what">
   <h2>Step 0 — 뼈대 세우기</h2>

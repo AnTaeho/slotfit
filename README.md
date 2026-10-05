@@ -13,6 +13,28 @@ pnpm render:all                             # 모든 쌍의 SVG
 > 이 문서는 사용자 결정과 Claude 제안을 구분해 적는다. 결정 근거는 모두 `spec.md` 부록 B(D-번호)에 있다.
 > 이번 개발에서는 사용자가 🙋 결정(golden, 실패 분류, cost 가중치, severity, fallback, status 경계, 계층 매칭을 택한 이유)을 Claude에게 위임했다. 그래서 해당 항목은 「Claude 결정(사용자 위임)」으로 적혀 있고, 사용자가 다시 정하면 바뀐다.
 
+## 구조
+
+```mermaid
+flowchart LR
+  F["fixtures/*.json<br/>템플릿 9 · 콘텐츠 11 · golden 5"] -->|JSON| L["io/loader.ts<br/>zod 검사"]
+  subgraph CORE["순수 함수 · pipeline.run()"]
+    C["context.ts<br/>MatchContext"] -->|ctx| M["Matcher.match()<br/>greedy · hungarian · hierarchical<br/>(bruteForce는 테스트 전용)"]
+    S["scoring/cost.ts<br/>weights.ts"] -->|짝 점수| M
+    M -->|MatchResult| V["validation/validate.ts<br/>규칙 5개"]
+    V -->|error| FB["fallback/<br/>shrinkFont → dropLowPriority"]
+    FB -->|재검사 · 최대 5번| V
+    V -->|남은 위반| D["decideStatus()<br/>accepted · degraded · rejected"]
+  end
+  L -->|템플릿·콘텐츠| C
+  D -->|PipelineResult| R["render/svg.ts → out/*.svg"]
+  D -->|PipelineResult| B["bench/evaluate.ts → bench/results/*.md"]
+  T["tests/<br/>fast-check"] -. invariant · oracle .-> M
+```
+
+- 파일을 읽고 쓰는 곳은 `io/`, `scripts/`, `bench/`뿐이다. 가운데 상자 안은 모두 입력을 바꾸지 않는 순수 함수다.
+- 조절하는 숫자(가중치·임계값)는 `src/scoring/weights.ts` 한 곳에만 있고, 각 숫자에 결정 ID(D-번호)가 달려 있다.
+
 ## 1. 문제 정의
 
 AI가 포스터 문구 같은 콘텐츠를 만든 뒤에는 세 가지를 판단해야 한다.
