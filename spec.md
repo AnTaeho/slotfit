@@ -570,6 +570,7 @@ README 구성:
 | D-21 | fallback 순서 = shrinkFont(minFontSize까지, 1px씩) → dropLowPriority(넘치는 항목 중 p3 먼저, 그다음 p2, p1은 버리지 않음, 한 번에 하나) (Claude 결정 — 🙋 사용자 위임, Step 4) | 줄이기 먼저 / 버리기 먼저 / 줄이기만 | 정보를 잃지 않는 대응을 먼저. 버리기는 넘침이 줄여도 남을 때만. 부작용: 찢어진 항목을 버려 groupSplit을 가릴 수 있음(F-8) |
 | D-22 | status: error 남음 → rejected / error 0이고 warn ≥ 1 또는 fallback 1회 이상 → degraded / 그 밖 accepted (Claude 결정 — 🙋 사용자 위임, Step 4. D-9를 넓힘) | fallback도 degraded / warn만 degraded | 글자를 줄이거나 항목을 버린 결과는 사람이 한 번 봐야 한다. accepted는 「손대지 않고 그대로 써도 됨」만 뜻한다 |
 | D-23 | `FallbackStep.applies(v, ctx, r, adj)`로 인자를 늘림 (Claude 결정, Step 4) | 인자 추가 / 위반만 | 이미 minFontSize인 슬롯에 shrinkFont가 헛돌지 않으려면 현재 글자 크기를 봐야 한다 |
+| D-24 | 마지막에 동작 불변 가독성 리팩터링 (Claude 결정, 2026-10-05) | 리팩터링 / 그대로 | 사용자 요청. spec 3.4 계약 이름은 유지하고 내부 이름·함수 분리·중복 제거만 했다(MatchContext에 `slotsById` 추가, 행렬 이중 생성 제거, `costBreakdown` 삭제). bench(ms 제외)·SVG 전체·trace가 전후 글자 하나까지 같음을 diff로 확인. Hungarian 본체의 표준 표기(u, v, p, way, minv)는 주석과 짝이라 유지 |
 
 ## 부록 C. 진행 상황
 
@@ -578,4 +579,5 @@ README 구성:
 - 최종 bench(99쌍, golden 5): greedy 0.43 · 9/56/34, hungarian 0.75 · groupSplit 6 · 39/40/20, hierarchical 0.89 · groupSplit 0 · 43/38/18. `pnpm test` 통과 40, typecheck 0
 - 위임 결정: 이번 세션에서 사용자가 🙋 판단을 Claude에게 위임했다. 부록 A의 분류와 D-10·D-13·D-14·D-19~D-22는 「Claude 결정 — 🙋 사용자 위임」이다. 사용자가 바꾸면 해당 줄과 README를 함께 고친다
 - 브랜치 메모: 이 저장소의 클라우드 세션은 지정 브랜치 하나에만 푸시할 수 있어, Step마다 로컬 `step-N-*` 브랜치를 `--no-ff`로 세션 브랜치 `claude/lucid-bell-n2rc8s`에 합쳐 Step 경계를 남겼다. `main` 병합(PR)은 사용자가 한다
+- 마무리(2026-10-05): README·가이드에 구조도 추가, 동작 불변 가독성 리팩터링(D-24). `pnpm test` 40 통과, typecheck 0, bench 숫자 변화 없음
 - 다음 할 일: 사용자가 위임 결정을 검토, `main`으로 병합, 설명 리허설. 남은 개선 거리는 F-8·F-9

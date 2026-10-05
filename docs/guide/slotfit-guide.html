@@ -89,7 +89,7 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     <span class="eyebrow">SLOTFIT · STEP 0 → STEP 4</span>
     <h1>처음 읽는 사람을 위한 SlotFit 코드 가이드</h1>
     <p class="lead">콘텐츠를 디자인 템플릿의 빈칸에 배치하고, 그 결과를 써도 되는지 판정하는 엔진을 다섯 단계에 걸쳐 만들었습니다. 각 단계에서 무엇을 만들었는지, 코드를 어떤 순서로 읽으면 되는지, 핵심 함수가 작은 예시에서 한 줄씩 어떻게 움직이는지를 처음 보는 사람 기준으로 풀어 썼습니다.</p>
-    <div class="note"><strong>읽는 법.</strong> 앞부분(Step 0)은 뼈대와 공통 개념입니다. 그 뒤 Step 1~4 장은 각각 「무엇을 왜 만들었나 → 읽을 파일 → 예시로 따라가기 → 결과」 순서입니다. Step 0 장의 숫자(테스트 8개, goldenMatch 0.40 등)는 Step 0이 끝났을 때의 값이고, 최종 값은 「마지막 수치」 장에 있습니다.</div>
+    <div class="note"><strong>읽는 법.</strong> 앞부분(Step 0)은 뼈대와 공통 개념입니다. 그 뒤 Step 1~4 장은 각각 「무엇을 왜 만들었나 → 읽을 파일 → 예시로 따라가기 → 결과」 순서입니다. Step 0 장의 숫자(테스트 8개, goldenMatch 0.40 등)는 Step 0이 끝났을 때의 값이고, 최종 값은 「마지막 수치」 장에 있습니다. Step 0 장의 코드 인용도 그때 모양입니다. 마지막에 읽기 좋게 다듬으면서 일부 이름이 바뀌었습니다(예: 규칙의 매개변수 <code>r</code> → <code>result</code>, 꾸러미에 <code>slotsById</code> 추가). 흐름과 뜻은 같습니다.</div>
     <nav aria-label="목차">
       <ol>
         <li><a href="#arch">전체 구조 한눈에 보기</a></li>
@@ -547,12 +547,22 @@ export type MatchResult = {
 
 <section id="tests">
   <h2>테스트가 지키는 것</h2>
-  <p>테스트 파일은 세 개이고 성격이 다릅니다.</p>
-  <h3>tests/smoke.test.ts — 일단 돌아가는가</h3>
-  <p>t01 × c01 × greedy를 한 번 돌려서 결과가 제대로 된 모양인지 봅니다. 그리고 「제목 칸에 무료배송이 들어간다」를 확인합니다. 틀린 결과를 일부러 고정해 둔 테스트입니다. 나중에 누가 greedy를 슬쩍 똑똑하게 고치면 이 테스트가 깨져서, 비교의 출발점이 바뀐 것을 알 수 있습니다.</p>
-  <h3>tests/schema.test.ts — 입력 검사가 일하는가</h3>
-  <p>모든 fixture 파일이 스키마를 통과하는지, 그리고 글 항목인데 <code>text</code>가 빠진 잘못된 입력을 실제로 막는지 봅니다.</p>
-  <h3>tests/invariants.test.ts — 어떤 입력에서도 깨지면 안 되는 약속</h3>
+  <p>Step 0에는 테스트 파일이 세 개였고, 지금은 일곱 개, 테스트 40개입니다(<code>pnpm test</code>). 성격으로 나누면 세 갈래입니다.</p>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>파일</th><th>개수</th><th>지키는 것</th><th>생긴 Step</th></tr></thead>
+    <tbody>
+      <tr><td><code>invariants.test.ts</code></td><td>16</td><td>matcher 4개 × 늘 참이어야 하는 성질 4가지(아래)</td><td>0</td></tr>
+      <tr><td><code>oracle.test.ts</code></td><td>5</td><td>Hungarian = 전수 탐색, <code>solveAssignment</code>가 무작위 행렬의 최솟값을 찾음, 금지 짝 비용이 충분히 큼</td><td>2</td></tr>
+      <tr><td><code>pipeline.test.ts</code></td><td>9</td><td>판정 경계 4가지, 긴 제목을 줄여 degraded, 거절이 맞는 두 쌍, fallback이 입력을 바꾸지 않음</td><td>4</td></tr>
+      <tr><td><code>hierarchical.test.ts</code></td><td>3</td><td>계층 매칭은 카드를 안 찢고 Hungarian은 찢음, t09×c09 반례가 그대로임</td><td>3</td></tr>
+      <tr><td><code>golden.test.ts</code></td><td>3</td><td>정답 비교(D-7): 그대로 5/5, 통째로 바꿔도 5/5, 섞이면 3/5</td><td>1</td></tr>
+      <tr><td><code>smoke.test.ts</code></td><td>2</td><td>greedy가 끝까지 돌고, 제목 칸에 「무료배송」이 들어가는 의도된 실패가 그대로임</td><td>0</td></tr>
+      <tr><td><code>schema.test.ts</code></td><td>2</td><td>모든 fixture가 스키마를 통과하고, 잘못된 입력은 막힘</td><td>0</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <h3>invariant — 어떤 입력에서도 깨지면 안 되는 약속</h3>
   <p>배치가 좋은지 나쁜지와 상관없이, 배치라면 반드시 지켜야 하는 네 가지입니다. 데이터베이스의 제약조건과 같은 성격입니다.</p>
   <ol>
     <li>모든 슬롯이 배치표에 정확히 한 번 나온다.</li>
@@ -560,8 +570,11 @@ export type MatchResult = {
     <li>글 칸에는 글만, 그림 칸에는 그림만 들어간다.</li>
     <li>배치된 것과 버려진 것을 합치면 전체 콘텐츠와 같다. 사라진 것도, 두 번 센 것도 없다.</li>
   </ol>
-  <p>이 검사는 fixture 네 쌍에 더해, <code>fast-check</code>가 무작위로 만든 템플릿과 콘텐츠 수백 개로도 돌립니다. 무작위 입력을 만드는 설계도가 <code>tests/arbitraries.ts</code>입니다. 사람이 떠올리지 못한 이상한 입력(슬롯 0개, 콘텐츠 0개, 그림만 있는 경우 등)을 대신 넣어 보는 장치입니다.</p>
-  <p>greedy의 네 가지는 모두 통과합니다. 아직 안 만든 매처 세 개는 4 × 3 = 12개가 건너뜀으로 표시됩니다. Step 2, 3에서 매처를 채우고 명단의 <code>implemented</code>를 <code>true</code>로 바꾸면 같은 검사가 자동으로 붙습니다.</p>
+  <p>이 검사는 모든 fixture 쌍에 더해, <code>fast-check</code>가 무작위로 만든 템플릿과 콘텐츠 수백 개로도 돌립니다. 무작위 입력의 설계도가 <code>tests/arbitraries.ts</code>, fixture를 꾸러미로 읽는 공용 도구가 <code>tests/fixtureContexts.ts</code>입니다. bruteForce는 느려서 슬롯 6개·항목 7개 이하의 입력에서만 검사합니다.</p>
+  <h3>oracle — 느리지만 틀릴 수 없는 답과 비교</h3>
+  <p>Hungarian이 맞는지는 같은 문제를 모든 경우를 시도해 푸는 bruteForce와 점수 합(totalCost)을 비교해 확인합니다. 배치는 동점이면 달라도 되므로 점수만 비교합니다. 자세한 내용은 Step 2 장에 있습니다.</p>
+  <h3>고정 — 알려진 결과가 바뀌면 알려 주기</h3>
+  <p>smoke, golden, hierarchical, pipeline 테스트는 「이 fixture에서는 이 결과가 나와야 한다」를 고정합니다. 일부러 틀린 결과(greedy의 「무료배송」)나 알려진 한계(t09×c09)도 고정해 둡니다. 누가 코드를 바꿔 이야기의 출발점이나 한계가 조용히 달라지면 테스트가 깨져서 알 수 있습니다. 기획서는 테스트를 invariant와 oracle 두 종류만 두기로 했는데, 이 셋은 핵심 수치를 지키려고 작게 더한 것입니다.</p>
   <div class="note"><strong>invariant와 validation 규칙의 차이.</strong> invariant는 코드에 버그가 없다면 절대 깨지지 않는 약속이고, 깨지면 프로그램을 고쳐야 합니다. validation 규칙은 입력에 따라 깨질 수 있는 품질 기준이고, 깨지면 결과물을 고치거나 거절합니다. 예상 질문 목록에도 있는 구분입니다.</div>
 </section>
 
@@ -697,7 +710,8 @@ body-menu → 버림   : priority 2                                          = 3
 
   <div class="read">
     <span class="depth">정독</span>
-    <h3>src/matchers/costMatrix.ts — 점수표를 정사각으로 만들기</h3>
+    <h3>src/matchers/costMatrix.ts — 점수표를 정사각으로 만들고 답을 읽기</h3>
+    <p>이 파일에는 함수가 셋 있습니다. <code>buildCostMatrix(ctx, 항목들, 칸들)</code>가 아래 같은 정사각 표를 만들고, <code>readSolution()</code>이 Hungarian의 답을 「짝·버림·비용」으로 읽고, <code>toMatchResult()</code>가 여러 조각의 답을 최종 결과 하나로 합칩니다. hungarian은 조각이 하나, hierarchical은 카드마다 한 조각과 나머지 한 조각입니다.</p>
     <p>회식 자리 배치를 떠올리면 쉽습니다. 사람(콘텐츠)마다 자리(칸)별 불편 점수가 있고, 전체 불편 합이 가장 작은 자리표를 찾고 싶습니다. 자리가 모자라면 「집에 가기」 자리를, 사람이 모자라면 「빈 의자」를 더해 표를 정사각으로 만듭니다. 그러면 「누구를 어디에, 누구를 보낼지, 어디를 비울지」가 한 번에 정해집니다.</p>
     <p>항목 a(priority 2), b(priority 3), 칸 S(body) 하나로 예를 듭니다. cost(a,S) = 4, cost(b,S) = 3이라고 합시다.</p>
 <pre><code>             S     집에가기  집에가기
@@ -762,7 +776,7 @@ b            3        10        10
     <span class="depth">정독 · 가장 중요</span>
     <h3>src/matchers/hierarchical.ts — match()의 네 단계</h3>
     <ol>
-      <li><strong>카드끼리의 비용표.</strong> 콘텐츠 카드(같은 groupId 묶음) g와 템플릿 카드 h마다 <code>solveSubproblem(g의 항목들, h의 칸들)</code>로 안쪽을 Hungarian으로 풀고, 그 최소 비용을 표에 적습니다.</li>
+      <li><strong>카드끼리의 비용표.</strong> 콘텐츠 카드(같은 groupId 묶음) g와 템플릿 카드 h마다 <code>solveSubproblem(ctx, g의 항목들, h의 칸들)</code>(hungarian.ts)로 안쪽을 Hungarian으로 풀고, 그 최소 비용을 표에 적습니다.</li>
       <li><strong>카드끼리 Hungarian.</strong> 그 표로 카드 짝을 정합니다. 짝 없는 콘텐츠 카드는 「항목 전부 버림」 비용, 짝 없는 템플릿 카드는 「칸 전부 비움」 비용입니다.</li>
       <li><strong>카드 안 확정.</strong> 짝지어진 카드는 1단계에서 푼 안쪽 결과를 그대로 씁니다. 안에서 버린 항목이 다른 카드로 새지 않게 합니다.</li>
       <li><strong>나머지.</strong> 카드에 속하지 않은 항목(제목 등)과 짝을 못 찾은 카드의 항목을, 카드 밖 칸과 짝 없는 카드의 칸에 flat Hungarian으로 넣습니다.</li>
@@ -1017,9 +1031,9 @@ pnpm bench                # 최종 비교표</code></pre>
   <h3>읽을 함수 (이 순서로)</h3>
   <ol>
     <li><code>run()</code> — <code>src/pipeline.ts</code>. 전체 흐름. 이제 fallback 반복이 실제로 돕니다.</li>
-    <li><code>costBreakdown()</code> — <code>src/scoring/cost.ts</code>. 위의 「신메뉴」 계산을 손으로 다시 해 봅니다.</li>
+    <li><code>cost()</code> — <code>src/scoring/cost.ts</code>. 네 벌점 함수(<code>roleCost</code>·<code>overflowCost</code>·<code>underfillCost</code>·<code>orderCost</code>)를 더하는 곳입니다. 위의 「신메뉴」 계산을 손으로 다시 해 봅니다.</li>
     <li><code>solveAssignment()</code> — <code>src/matchers/hungarian.ts</code>. 3×3 표의 기록을 옆에 두고 따라갑니다.</li>
-    <li><code>match()</code> — <code>src/matchers/hierarchical.ts</code>. t04×c05의 카드 비용표로 1~4단계를 따라갑니다.</li>
+    <li><code>match()</code>와 <code>pairGroups()</code> — <code>src/matchers/hierarchical.ts</code>. t04×c05의 카드 비용표로 1~4단계를 따라갑니다.</li>
     <li><code>decideStatus()</code>와 fallback 두 단계 — <code>src/pipeline.ts</code>, <code>src/fallback/steps/</code>.</li>
   </ol>
   <h3>예상 질문과 답의 뼈대</h3>
