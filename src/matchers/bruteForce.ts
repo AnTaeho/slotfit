@@ -63,14 +63,14 @@ function match(ctx: MatchContext): MatchResult {
   const best = found.best;
   if (best === null) throw new Error('bruteForce: 배치를 하나도 찾지 못했다');
 
-  const slotToItem = new Map<number, string>();
+  const itemIdBySlot = new Map<number, string>();
   const dropped: string[] = [];
-  items.forEach((it, k) => {
+  items.forEach((item, k) => {
     const j = best.choice[k];
-    if (j === null || j === undefined) dropped.push(it.id);
-    else slotToItem.set(j, it.id);
+    if (j === null || j === undefined) dropped.push(item.id);
+    else itemIdBySlot.set(j, item.id);
   });
-  const assignment = slots.map((slot, j) => ({ slotId: slot.id, contentId: slotToItem.get(j) ?? null }));
+  const assignment = slots.map((slot, j) => ({ slotId: slot.id, contentId: itemIdBySlot.get(j) ?? null }));
   return { assignment, dropped, totalCost: best.totalCost };
 }
 

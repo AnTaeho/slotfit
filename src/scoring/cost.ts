@@ -8,11 +8,8 @@ import {
   ROLE_MISMATCH_COST, ROLE_UNKNOWN_COST, SHRINK_NEEDED_COST, UNDERFILL_COST,
 } from './weights';
 
-// 항목별 내역. 나중에 「왜 이 자리인가」를 보여 줄 때 쓴다. forbidden이면 total만 FORBIDDEN_COST.
-export type CostBreakdown = { role: number; overflow: number; underfill: number; order: number; total: number };
-
 // role 항: roleHint가 있는데 슬롯 role과 다르면 벌점. roleHint가 없으면(D-8) 0.
-export function roleCost(item: ContentItem, slot: Slot): number {
+function roleCost(item: ContentItem, slot: Slot): number {
   if (item.roleHint === undefined) return ROLE_UNKNOWN_COST;
   return item.roleHint === slot.role ? 0 : ROLE_MISMATCH_COST;
 }
@@ -23,7 +20,7 @@ function capacityAtMin(slot: TextSlot): number {
 }
 
 // 넘침 항: 기본 크기로 들어가면 0. 아니면 「줄여야 함」 벌점 + minFontSize로도 넘치는 줄 수 × 줄당 벌점.
-export function overflowCost(text: string, slot: TextSlot): number {
+function overflowCost(text: string, slot: TextSlot): number {
   if (fits(text, slot, slot.fontSize)) return 0;
   // minFontSize에서 fits면 초과 0. fits와 capacity 계산이 부동소수 경계에서 어긋나지 않게 먼저 본다.
   if (fits(text, slot, slot.minFontSize)) return SHRINK_NEEDED_COST;
@@ -34,7 +31,7 @@ export function overflowCost(text: string, slot: TextSlot): number {
 
 // 너무 짧음 항: 기본 크기에서 텍스트가 차지하는 줄 수(소수, 문단 너비 합 기준)가 maxLines보다 적을수록 크다.
 // 예: maxLines 4, 텍스트가 1줄 분량 → used 1, underfill 0.75 → 4 × 0.75 = 3.
-export function underfillCost(text: string, slot: TextSlot): number {
+function underfillCost(text: string, slot: TextSlot): number {
   const widthEm = text.split('\n').reduce((sum, paragraph) => sum + textWidthEm(paragraph), 0);
   const used = Math.min(slot.maxLines, (widthEm * slot.fontSize) / slot.box.w);
   const underfill = 1 - used / slot.maxLines;
@@ -49,7 +46,7 @@ function relativePos(index: number, count: number): number {
 // 입력 순서 항(D-16): 항목의 상대 위치(입력 순서)와 슬롯의 상대 위치(DFS 순서)의 차이의 제곱에 비례.
 // 진짜 「역전 쌍 수」는 두 짝을 함께 봐야 정해져 짝 하나의 cost로 쪼갤 수 없다.
 // assignment problem은 짝별 cost의 합만 다루므로, 짝 하나로 정해지는 상대 위치 차이로 근사한다.
-export function orderCost(item: ContentItem, slot: Slot, ctx: MatchContext): number {
+function orderCost(item: ContentItem, slot: Slot, ctx: MatchContext): number {
   const itemIndex = ctx.itemIndex[item.id];
   const slotIndex = ctx.slotIndex[slot.id];
   if (itemIndex === undefined || slotIndex === undefined) {
@@ -63,9 +60,10 @@ export function orderCost(item: ContentItem, slot: Slot, ctx: MatchContext): num
   return ORDER_COST * diff * diff;
 }
 
-export function costBreakdown(item: ContentItem, slot: Slot, ctx: MatchContext): CostBreakdown {
+// 짝 하나의 나쁨 점수. 순서대로 role 항 + 넘침 항 + 너무 짧음 항 + 입력 순서 항.
+export function cost(item: ContentItem, slot: Slot, ctx: MatchContext): number {
   // D-15: kind 불일치는 큰 유한값. 다른 항은 보지 않는다.
-  if (item.kind !== slot.type) return { role: 0, overflow: 0, underfill: 0, order: 0, total: FORBIDDEN_COST };
+  if (item.kind !== slot.type) return FORBIDDEN_COST;
 
   const role = roleCost(item, slot);
   const order = orderCost(item, slot, ctx);
@@ -77,11 +75,7 @@ export function costBreakdown(item: ContentItem, slot: Slot, ctx: MatchContext):
     overflow = overflowCost(text, slot);
     underfill = underfillCost(text, slot);
   }
-  return { role, overflow, underfill, order, total: role + overflow + underfill + order };
-}
-
-export function cost(item: ContentItem, slot: Slot, ctx: MatchContext): number {
-  return costBreakdown(item, slot, ctx).total;
+  return role + overflow + underfill + order;
 }
 
 // 항목을 버리는 비용(dummy 슬롯과 짝). priority가 1에 가까울수록 크다.

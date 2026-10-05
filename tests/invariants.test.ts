@@ -3,37 +3,37 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { buildContext } from '../src/context';
 import type { MatchContext } from '../src/context';
-import { loadAllContents, loadAllTemplates } from '../src/io/loader';
 import { REGISTRY, withinLimit } from '../src/matchers';
 import type { RegistryEntry } from '../src/matchers';
 import type { MatchResult } from '../src/schema';
 import { contentArb, templateArb } from './arbitraries';
+import { allFixtureContexts } from './fixtureContexts';
 
-type Check = (ctx: MatchContext, r: MatchResult) => void;
+type Check = (ctx: MatchContext, result: MatchResult) => void;
 
-const placedIds = (r: MatchResult): string[] =>
-  r.assignment.flatMap((a) => (a.contentId === null ? [] : [a.contentId]));
+const placedIds = (result: MatchResult): string[] =>
+  result.assignment.flatMap((a) => (a.contentId === null ? [] : [a.contentId]));
 
 const checks: { title: string; check: Check }[] = [
   {
     title: '모든 슬롯이 assignment에 정확히 1번 등장한다',
-    check: (ctx, r) => {
-      expect(r.assignment.map((a) => a.slotId).sort()).toEqual(ctx.slots.map((s) => s.id).sort());
+    check: (ctx, result) => {
+      expect(result.assignment.map((a) => a.slotId).sort()).toEqual(ctx.slots.map((s) => s.id).sort());
     },
   },
   {
     title: '한 contentId는 최대 1번 배치된다',
-    check: (_ctx, r) => {
-      const placed = placedIds(r);
+    check: (_ctx, result) => {
+      const placed = placedIds(result);
       expect(new Set(placed).size).toBe(placed.length);
     },
   },
   {
     title: '배치된 쌍은 kind가 일치한다 (text↔text, image↔image)',
-    check: (ctx, r) => {
-      for (const { slotId, contentId } of r.assignment) {
+    check: (ctx, result) => {
+      for (const { slotId, contentId } of result.assignment) {
         if (contentId === null) continue;
-        const slot = ctx.slots.find((s) => s.id === slotId);
+        const slot = ctx.slotsById[slotId];
         expect(slot).toBeDefined();
         expect(ctx.itemsById[contentId]?.kind).toBe(slot?.type);
       }
@@ -41,18 +41,15 @@ const checks: { title: string; check: Check }[] = [
   },
   {
     title: '배치된 콘텐츠 + dropped = 전체 콘텐츠 (중복 없이)',
-    check: (ctx, r) => {
-      const all = [...placedIds(r), ...r.dropped];
+    check: (ctx, result) => {
+      const all = [...placedIds(result), ...result.dropped];
       expect(new Set(all).size).toBe(all.length);
       expect([...all].sort()).toEqual(ctx.content.items.map((i) => i.id).sort());
     },
   },
 ];
 
-// fixture 전 조합.
-const fixtureContexts: MatchContext[] = loadAllTemplates().flatMap((t) =>
-  loadAllContents().map((c) => buildContext(t, c)),
-);
+const fixtureContexts = allFixtureContexts();
 
 // oracle 전용 matcher(bruteForce)는 크기 상한 이내인 입력만 본다(D-17). 랜덤 입력은 fc.pre로 건너뛴다.
 function runCheck(entry: RegistryEntry, check: Check): void {

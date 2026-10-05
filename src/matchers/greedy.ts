@@ -11,7 +11,7 @@ function match(ctx: MatchContext): MatchResult {
 
   for (const slot of ctx.slots) {
     // role·길이·그룹은 보지 않는다. 입력 순서(content.items)만 따른다.
-    const item = ctx.content.items.find((i) => !used.has(i.id) && i.kind === slot.type);
+    const item = ctx.content.items.find((candidate) => !used.has(candidate.id) && candidate.kind === slot.type);
     if (item === undefined) {
       assignment.push({ slotId: slot.id, contentId: null });
       totalCost += DUMMY_ITEM_COST(slot); // 비움
@@ -22,10 +22,10 @@ function match(ctx: MatchContext): MatchResult {
     totalCost += cost(item, slot, ctx); // kind가 같은 쌍만 고르므로 금지 칸은 없다
   }
 
-  const droppedItems = ctx.content.items.filter((i) => !used.has(i.id));
+  const droppedItems = ctx.content.items.filter((item) => !used.has(item.id));
   // totalCost를 다른 matcher와 같은 기준(실제 짝 cost + 버림 + 비움)으로 맞춘다. 고르는 방식은 cost를 보지 않는다.
   for (const item of droppedItems) totalCost += DUMMY_SLOT_COST(item); // 버림
-  return { assignment, dropped: droppedItems.map((i) => i.id), totalCost };
+  return { assignment, dropped: droppedItems.map((item) => item.id), totalCost };
 }
 
 export const greedy: Matcher = { name: 'greedy', match };

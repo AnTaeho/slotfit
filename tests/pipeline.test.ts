@@ -5,7 +5,7 @@ import { dropLowPriority, shrinkFont } from '../src/fallback/steps';
 import { loadContent, loadTemplate } from '../src/io/loader';
 import { hierarchical } from '../src/matchers/hierarchical';
 import { decideStatus, run } from '../src/pipeline';
-import type { Adjustments, Content, MatchResult, Template, Violation } from '../src/schema';
+import type { Adjustments, Content, MatchResult, PipelineResult, Template, Violation } from '../src/schema';
 import { validate } from '../src/validation/validate';
 
 const error: Violation = { ruleId: 'overflow', severity: 'error', detail: 'e' };
@@ -18,11 +18,13 @@ describe('decideStatus (D-22)', () => {
   it('error 1이면 fallback·warn과 무관하게 rejected', () => expect(decideStatus([error, warn], 2)).toBe('rejected'));
 });
 
-const runPair = (t: string, c: string) => run(loadTemplate(t), loadContent(c), hierarchical);
+// fixture 쌍을 hierarchical로 끝까지 실행한다.
+const runHierarchical = (templateId: string, contentId: string): PipelineResult =>
+  run(loadTemplate(templateId), loadContent(contentId), hierarchical);
 
 describe('fallback: shrinkFont가 고치는 경우', () => {
   it('t02 × c03(긴 제목): 제목을 줄여 overflow가 없어지고 degraded', () => {
-    const result = runPair('t02-notice-two-body', 'c03-long-title');
+    const result = runHierarchical('t02-notice-two-body', 'c03-long-title');
     expect(result.trace.some((line) => line.startsWith('fallback#') && line.includes('shrinkFont'))).toBe(true);
     expect(result.violations.filter((v) => v.ruleId === 'overflow')).toEqual([]);
     expect(result.adjustments.fontSize.title).toBeLessThan(32);
@@ -32,10 +34,10 @@ describe('fallback: shrinkFont가 고치는 경우', () => {
 
 describe('거절이 올바른 fixture', () => {
   it('t04 × c10(본문 12개, 전부 p1) → rejected', () => {
-    expect(runPair('t04-product-cards-3', 'c10-twelve-bodies').status).toBe('rejected');
+    expect(runHierarchical('t04-product-cards-3', 'c10-twelve-bodies').status).toBe('rejected');
   });
   it('t05 × c11(줄여도 안 들어가는 p1 고지문) → rejected, overflow가 남는다', () => {
-    const result = runPair('t05-narrow-banner', 'c11-long-legal-notice');
+    const result = runHierarchical('t05-narrow-banner', 'c11-long-legal-notice');
     expect(result.status).toBe('rejected');
     expect(result.violations.some((v) => v.ruleId === 'overflow' && v.contentId === 'notice')).toBe(true);
   });
@@ -59,23 +61,23 @@ const tinyContent: Content = {
 
 describe('fallback은 입력을 바꾸지 않는다', () => {
   const ctx = buildContext(tinyTemplate, tinyContent);
-  const r: MatchResult = { assignment: [{ slotId: 'b', contentId: 'x' }], dropped: [], totalCost: 0 };
+  const result: MatchResult = { assignment: [{ slotId: 'b', contentId: 'x' }], dropped: [], totalCost: 0 };
 
-  it('shrinkFont', () => {
+  it('shrinkFont: 입력 result·adj는 그대로, 새 adj에 minFontSize(12)를 담는다', () => {
     const adj: Adjustments = { fontSize: {} };
-    const before = structuredClone({ r, adj });
-    expect(shrinkFont.applies(validate(ctx, r, adj), ctx, r, adj)).toBe(true);
-    const next = shrinkFont.apply(ctx, r, adj);
-    expect({ r, adj }).toEqual(before);
+    const before = structuredClone({ result, adj });
+    expect(shrinkFont.applies(validate(ctx, result, adj), ctx, result, adj)).toBe(true);
+    const next = shrinkFont.apply(ctx, result, adj);
+    expect({ result, adj }).toEqual(before);
     expect(next.adj.fontSize.b).toBe(12);
   });
 
-  it('dropLowPriority', () => {
+  it('dropLowPriority: 입력 result·adj는 그대로, 새 결과에서 x를 버린다', () => {
     const adj: Adjustments = { fontSize: { b: 12 } };
-    const before = structuredClone({ r, adj });
-    expect(dropLowPriority.applies(validate(ctx, r, adj), ctx, r, adj)).toBe(true);
-    const next = dropLowPriority.apply(ctx, r, adj);
-    expect({ r, adj }).toEqual(before);
+    const before = structuredClone({ result, adj });
+    expect(dropLowPriority.applies(validate(ctx, result, adj), ctx, result, adj)).toBe(true);
+    const next = dropLowPriority.apply(ctx, result, adj);
+    expect({ result, adj }).toEqual(before);
     expect(next.r.dropped).toEqual(['x']);
     expect(next.r.assignment).toEqual([{ slotId: 'b', contentId: null }]);
   });
