@@ -12,7 +12,8 @@ describe('smoke: t01-sale-cards × c01-summer-sale × greedy', () => {
     expect(['accepted', 'degraded', 'rejected']).toContain(result.status);
     expect(result.assignment).toHaveLength(5);
     expect(Array.isArray(result.dropped)).toBe(true);
-    expect(result.adjustments).toEqual({ fontSize: {} });
+    // fallback(shrinkFont)이 글자 크기를 줄일 수 있어 내용은 고정하지 않는다(Step 4).
+    expect(typeof result.adjustments.fontSize).toBe('object');
     expect(Array.isArray(result.violations)).toBe(true);
     expect(result.trace.length).toBeGreaterThan(0);
   });
