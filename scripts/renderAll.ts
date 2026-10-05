@@ -11,10 +11,10 @@ import { renderSvg } from '../src/render/svg';
 const OUT_DIR = fileURLToPath(new URL('../out/', import.meta.url));
 
 function main(): void {
-  // 인자가 없으면 구현된 matcher 전부.
+  // 인자가 없으면 구현된 matcher 전부. oracle 전용(bruteForce, D-17)은 큰 쌍에서 못 돌아 뺀다.
   const wanted = process.argv.slice(2);
   const entries = REGISTRY.filter(
-    (e) => e.implemented && (wanted.length === 0 || wanted.includes(e.matcher.name)),
+    (e) => e.implemented && e.oracleOnly !== true && (wanted.length === 0 || wanted.includes(e.matcher.name)),
   );
   mkdirSync(OUT_DIR, { recursive: true });
 

@@ -38,8 +38,8 @@ function cell(r: PipelineResult): string {
 
 function evaluate(entry: RegistryEntry, pairs: Pair[], cells: PairCell): string[] {
   const name = entry.matcher.name;
-  // 미구현 matcher는 실행하지 않고 전부 "-".
-  if (!entry.implemented) return [name, ...COLUMNS.slice(1).map(() => NONE)];
+  // 미구현 matcher와 oracle 전용 matcher(D-17)는 실행하지 않고 전부 "-".
+  if (!entry.implemented || entry.oracleOnly === true) return [name, ...COLUMNS.slice(1).map(() => NONE)];
 
   let goldenSlots = 0;
   let goldenHits = 0;
@@ -127,6 +127,7 @@ function main(): void {
     '- goldenMatch: golden이 있는 쌍에서 정답과 일치하는 슬롯 비율. 모양이 같은 카드끼리 통째로 바꾼 배치도 정답(D-7)',
     '- errors / warns / p1Dropped / groupSplit: 전체 쌍의 합. 미구현 지표는 "-"',
     '- ms: 쌍 하나를 한 번 실행한 시간의 평균',
+    '- bruteForce는 oracle 전용(tests/oracle.test.ts에서만 실행)이라 "-"로 둔다(D-17)',
     '',
     toTable(COLUMNS, summary),
     '',
@@ -134,7 +135,7 @@ function main(): void {
     '',
     '- 칸: status(acc/deg/rej) e=error 수 w=warn 수 d=dropped 수, g=golden 맞은 슬롯/전체. ★ = golden 있는 쌍',
     '',
-    pairTable(pairs, REGISTRY.filter((e) => e.implemented), cells),
+    pairTable(pairs, REGISTRY.filter((e) => e.implemented && e.oracleOnly !== true), cells),
     '',
   ].join('\n');
 

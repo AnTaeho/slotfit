@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { buildContext } from '../src/context';
 import type { MatchContext } from '../src/context';
 import { loadAllContents, loadAllTemplates } from '../src/io/loader';
-import { REGISTRY } from '../src/matchers';
-import type { Matcher } from '../src/matchers';
+import { REGISTRY, withinLimit } from '../src/matchers';
+import type { RegistryEntry } from '../src/matchers';
 import type { MatchResult } from '../src/schema';
 import { contentArb, templateArb } from './arbitraries';
 
@@ -54,21 +54,27 @@ const fixtureContexts: MatchContext[] = loadAllTemplates().flatMap((t) =>
   loadAllContents().map((c) => buildContext(t, c)),
 );
 
-function runCheck(matcher: Matcher, check: Check): void {
-  for (const ctx of fixtureContexts) check(ctx, matcher.match(ctx));
+// oracle 전용 matcher(bruteForce)는 크기 상한 이내인 입력만 본다(D-17). 랜덤 입력은 fc.pre로 건너뛴다.
+function runCheck(entry: RegistryEntry, check: Check): void {
+  const { matcher } = entry;
+  for (const ctx of fixtureContexts) {
+    if (withinLimit(entry, ctx)) check(ctx, matcher.match(ctx));
+  }
   fc.assert(
     fc.property(templateArb, contentArb, (t, c) => {
       const ctx = buildContext(t, c);
+      fc.pre(withinLimit(entry, ctx));
       check(ctx, matcher.match(ctx));
     }),
   );
 }
 
-for (const { matcher, implemented } of REGISTRY) {
+for (const entry of REGISTRY) {
+  const { matcher, implemented } = entry;
   describe(`invariants: ${matcher.name}`, () => {
     for (const { title, check } of checks) {
       // 미구현 matcher는 예외를 잡지 않고 레지스트리 플래그로 건너뛴다.
-      it.skipIf(!implemented)(title, () => runCheck(matcher, check));
+      it.skipIf(!implemented)(title, () => runCheck(entry, check));
     }
   });
 }
