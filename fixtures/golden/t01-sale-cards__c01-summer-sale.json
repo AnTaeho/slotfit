@@ -1,0 +1,12 @@
+{
+  "templateId": "t01-sale-cards",
+  "contentId": "c01-summer-sale",
+  "assignment": [
+    { "slotId": "title", "contentId": "title" },
+    { "slotId": "cardA-sub", "contentId": "c1-sub" },
+    { "slotId": "cardA-body", "contentId": "c1-body" },
+    { "slotId": "cardB-sub", "contentId": "c2-sub" },
+    { "slotId": "cardB-body", "contentId": "c2-body" }
+  ],
+  "note": "카드 A/B 순서는 바뀌어도 정답으로 인정할지 결정 필요"
+}

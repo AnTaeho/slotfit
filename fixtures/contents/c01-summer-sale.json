@@ -1,0 +1,11 @@
+{
+  "id": "c01-summer-sale",
+  "description": "순서가 뒤섞인 카드형 콘텐츠",
+  "items": [
+    { "id": "c1-sub",  "kind": "text", "roleHint": "subtitle", "text": "무료배송", "groupId": "g1", "priority": 2 },
+    { "id": "c1-body", "kind": "text", "roleHint": "body", "text": "3만원 이상 구매 시 전국 무료배송", "groupId": "g1", "priority": 2 },
+    { "id": "title",   "kind": "text", "roleHint": "title", "text": "여름 세일", "priority": 1 },
+    { "id": "c2-sub",  "kind": "text", "roleHint": "subtitle", "text": "할인", "groupId": "g2", "priority": 2 },
+    { "id": "c2-body", "kind": "text", "roleHint": "body", "text": "전 품목 20% 할인", "groupId": "g2", "priority": 2 }
+  ]
+}

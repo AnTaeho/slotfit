@@ -1,0 +1,23 @@
+{
+  "id": "t01-sale-cards",
+  "description": "제목 + 카드 2장(소제목/설명). 그룹 찢어짐 테스트용",
+  "root": {
+    "id": "root", "type": "frame", "box": { "x": 0, "y": 0, "w": 600, "h": 400 },
+    "children": [
+      { "id": "title", "type": "text", "role": "title",
+        "box": { "x": 40, "y": 30, "w": 520, "h": 60 }, "fontSize": 32, "minFontSize": 22, "maxLines": 1 },
+      { "id": "cardA", "type": "group", "box": { "x": 40, "y": 120, "w": 250, "h": 240 }, "children": [
+        { "id": "cardA-sub", "type": "text", "role": "subtitle",
+          "box": { "x": 56, "y": 136, "w": 218, "h": 40 }, "fontSize": 20, "minFontSize": 16, "maxLines": 1 },
+        { "id": "cardA-body", "type": "text", "role": "body",
+          "box": { "x": 56, "y": 186, "w": 218, "h": 150 }, "fontSize": 16, "minFontSize": 12, "maxLines": 4 }
+      ]},
+      { "id": "cardB", "type": "group", "box": { "x": 310, "y": 120, "w": 250, "h": 240 }, "children": [
+        { "id": "cardB-sub", "type": "text", "role": "subtitle",
+          "box": { "x": 326, "y": 136, "w": 218, "h": 40 }, "fontSize": 20, "minFontSize": 16, "maxLines": 1 },
+        { "id": "cardB-body", "type": "text", "role": "body",
+          "box": { "x": 326, "y": 186, "w": 218, "h": 150 }, "fontSize": 16, "minFontSize": 12, "maxLines": 4 }
+      ]}
+    ]
+  }
+}

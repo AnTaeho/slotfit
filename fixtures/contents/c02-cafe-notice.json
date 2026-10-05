@@ -1,0 +1,11 @@
+{
+  "id": "c02-cafe-notice",
+  "description": "제목 1개 + 본문 4개. 본문 슬롯보다 본문이 많은 상황(본문 과다)",
+  "items": [
+    { "id": "title", "kind": "text", "roleHint": "title", "text": "신메뉴 출시 안내", "priority": 1 },
+    { "id": "body-menu", "kind": "text", "roleHint": "body", "text": "제주 말차 라떼가 새로 나왔어요", "priority": 2 },
+    { "id": "body-event", "kind": "text", "roleHint": "body", "text": "오픈 기념으로 첫 주 전 메뉴 10% 할인", "priority": 2 },
+    { "id": "body-hours", "kind": "text", "roleHint": "body", "text": "매장 운영 시간은 오전 9시부터 밤 10시까지", "priority": 3 },
+    { "id": "body-tumbler", "kind": "text", "roleHint": "body", "text": "텀블러를 가져오면 500원 추가 할인", "priority": 3 }
+  ]
+}

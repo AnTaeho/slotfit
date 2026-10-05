@@ -1,0 +1,21 @@
+{
+  "name": "slotfit",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.14.0",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "bench": "tsx bench/evaluate.ts",
+    "render": "tsx scripts/render.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "fast-check": "^4.10.2",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3",
+    "zod": "^4.6.5"
+  }
+}

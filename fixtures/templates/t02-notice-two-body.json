@@ -1,0 +1,15 @@
+{
+  "id": "t02-notice-two-body",
+  "description": "제목 + 본문 슬롯 2개. 본문이 슬롯보다 많이 들어오는 상황(본문 과다) 테스트용",
+  "root": {
+    "id": "root", "type": "frame", "box": { "x": 0, "y": 0, "w": 600, "h": 400 },
+    "children": [
+      { "id": "title", "type": "text", "role": "title",
+        "box": { "x": 40, "y": 30, "w": 520, "h": 60 }, "fontSize": 32, "minFontSize": 22, "maxLines": 1 },
+      { "id": "body1", "type": "text", "role": "body",
+        "box": { "x": 40, "y": 120, "w": 520, "h": 110 }, "fontSize": 18, "minFontSize": 14, "maxLines": 3 },
+      { "id": "body2", "type": "text", "role": "body",
+        "box": { "x": 40, "y": 250, "w": 520, "h": 110 }, "fontSize": 18, "minFontSize": 14, "maxLines": 3 }
+    ]
+  }
+}
