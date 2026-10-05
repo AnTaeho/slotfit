@@ -75,7 +75,9 @@ export function renderSvg(ctx: MatchContext, result: PipelineResult): string {
   const height = frameBottom + RENDER_FOOTER_HEIGHT;
   const errors = result.violations.filter((v) => v.severity === 'error').length;
   const warns = result.violations.length - errors;
-  const footer = `status: ${result.status} · matcher: ${result.matcher} · error ${errors} · warn ${warns} · dropped ${result.dropped.length}`;
+  // fallback 적용 횟수 = trace의 'fallback#' 줄 수(pipeline이 단계를 적용할 때마다 한 줄 남긴다).
+  const fallbacks = result.trace.filter((line) => line.startsWith('fallback#')).length;
+  const footer = `status: ${result.status} · matcher: ${result.matcher} · error ${errors} · warn ${warns} · dropped ${result.dropped.length} · fallback ${fallbacks}`;
 
   const groups = collectGroups(ctx.template.root).map(
     (g) =>
