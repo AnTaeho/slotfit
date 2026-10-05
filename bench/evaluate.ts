@@ -3,16 +3,19 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { goldenKey, loadAllContents, loadAllGoldens, loadAllTemplates } from '../src/io/loader';
+import { scoreGolden } from './golden';
 import { REGISTRY } from '../src/matchers';
 import type { RegistryEntry } from '../src/matchers';
 import { run } from '../src/pipeline';
-import type { Content, Golden, Template } from '../src/schema';
+import type { Content, Golden, PipelineResult, Template } from '../src/schema';
 
 const RESULTS_DIR = fileURLToPath(new URL('./results/', import.meta.url));
 const NONE = '-';
 const COLUMNS = ['matcher', 'goldenMatch', 'errors', 'warns', 'p1Dropped', 'groupSplit', 'status (acc/deg/rej)', 'ms'];
 
 type Pair = { template: Template; content: Content; golden: Golden | undefined };
+// 쌍 하나의 한 줄 요약(쌍별 표용). 키 = goldenKey.
+type PairCell = Map<string, string>;
 
 function pad2(n: number): string {
   return String(n).padStart(2, '0');
@@ -23,7 +26,17 @@ function stamp(d: Date): string {
   return `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}-${pad2(d.getHours())}${pad2(d.getMinutes())}`;
 }
 
-function evaluate(entry: RegistryEntry, pairs: Pair[]): string[] {
+function errorCount(r: PipelineResult): number {
+  return r.violations.filter((v) => v.severity === 'error').length;
+}
+
+// 쌍별 표의 칸: status 첫 글자 + error/warn/dropped 수. 예: "rej e1 w0 d2"
+function cell(r: PipelineResult): string {
+  const e = errorCount(r);
+  return `${r.status.slice(0, 3)} e${e} w${r.violations.length - e} d${r.dropped.length}`;
+}
+
+function evaluate(entry: RegistryEntry, pairs: Pair[], cells: PairCell): string[] {
   const name = entry.matcher.name;
   // 미구현 matcher는 실행하지 않고 전부 "-".
   if (!entry.implemented) return [name, ...COLUMNS.slice(1).map(() => NONE)];
@@ -42,17 +55,17 @@ function evaluate(entry: RegistryEntry, pairs: Pair[]): string[] {
     totalMs += performance.now() - started;
 
     status[result.status] += 1;
-    errors += result.violations.filter((v) => v.severity === 'error').length;
+    cells.set(goldenKey(template.id, content.id), cell(result));
+    errors += errorCount(result);
     warns += result.violations.filter((v) => v.severity === 'warn').length;
     p1Dropped += result.dropped.filter((id) => content.items.find((i) => i.id === id)?.priority === 1).length;
 
     if (golden !== undefined) {
-      // 가정: 정확 일치만 센다. TODO(Step 1): 그룹 순서 교환 허용 여부는 사용자 결정을 반영한다.
-      const actual = new Map(result.assignment.map((a) => [a.slotId, a.contentId]));
-      for (const expected of golden.assignment) {
-        goldenSlots += 1;
-        if (actual.get(expected.slotId) === expected.contentId) goldenHits += 1;
-      }
+      // D-7: 모양이 같은 카드끼리 통째로 바꾼 배치도 정답으로 센다(bench/golden.ts).
+      const score = scoreGolden(template, golden.assignment, result.assignment);
+      goldenSlots += score.total;
+      goldenHits += score.hits;
+      cells.set(`${goldenKey(template.id, content.id)}#golden`, `${score.hits}/${score.total}`);
     }
   }
 
@@ -68,9 +81,29 @@ function evaluate(entry: RegistryEntry, pairs: Pair[]): string[] {
   ];
 }
 
-function toTable(rows: string[][]): string {
+function toTable(header: string[], rows: string[][]): string {
   const line = (cells: string[]): string => `| ${cells.join(' | ')} |`;
-  return [line(COLUMNS), line(COLUMNS.map(() => '---')), ...rows.map(line)].join('\n');
+  return [line(header), line(header.map(() => '---')), ...rows.map(line)].join('\n');
+}
+
+// 쌍 × matcher 표. golden이 있는 쌍은 맞은 슬롯 수를 함께 적는다.
+function pairTable(pairs: Pair[], entries: RegistryEntry[], cells: Map<string, PairCell>): string {
+  const header = ['template × content', ...entries.map((e) => e.matcher.name)];
+  const rows = pairs.map((p) => {
+    const key = goldenKey(p.template.id, p.content.id);
+    const label = p.golden === undefined ? key : `${key} ★`;
+    return [
+      label,
+      ...entries.map((e) => {
+        const c = cells.get(e.matcher.name);
+        const summary = c?.get(key);
+        if (summary === undefined) return NONE;
+        const g = c?.get(`${key}#golden`);
+        return g === undefined ? summary : `${summary} g${g}`;
+      }),
+    ];
+  });
+  return toTable(header, rows);
 }
 
 function main(): void {
@@ -82,16 +115,26 @@ function main(): void {
   );
   const goldenPairs = pairs.filter((p) => p.golden !== undefined).length;
 
+  const cells = new Map<string, PairCell>(REGISTRY.map((e) => [e.matcher.name, new Map()]));
+  const summary = REGISTRY.map((entry) => evaluate(entry, pairs, cells.get(entry.matcher.name) ?? new Map()));
+
   const now = new Date();
   const name = stamp(now);
   const report = [
     `# bench ${name}`,
     '',
     `- 템플릿 ${templates.length} × 콘텐츠 ${contents.length} = ${pairs.length}쌍, golden ${goldenPairs}쌍`,
-    '- goldenMatch: golden이 있는 쌍에서 정답과 정확히 일치하는 슬롯 비율',
+    '- goldenMatch: golden이 있는 쌍에서 정답과 일치하는 슬롯 비율. 모양이 같은 카드끼리 통째로 바꾼 배치도 정답(D-7)',
+    '- errors / warns / p1Dropped / groupSplit: 전체 쌍의 합. 미구현 지표는 "-"',
     '- ms: 쌍 하나를 한 번 실행한 시간의 평균',
     '',
-    toTable(REGISTRY.map((entry) => evaluate(entry, pairs))),
+    toTable(COLUMNS, summary),
+    '',
+    '## 쌍별 결과',
+    '',
+    '- 칸: status(acc/deg/rej) e=error 수 w=warn 수 d=dropped 수, g=golden 맞은 슬롯/전체. ★ = golden 있는 쌍',
+    '',
+    pairTable(pairs, REGISTRY.filter((e) => e.implemented), cells),
     '',
   ].join('\n');
 
