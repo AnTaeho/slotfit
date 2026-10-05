@@ -30,10 +30,14 @@ function errorCount(r: PipelineResult): number {
   return r.violations.filter((v) => v.severity === 'error').length;
 }
 
-// 쌍별 표의 칸: status 첫 글자 + error/warn/dropped 수. 예: "rej e1 w0 d2"
+function groupSplitCount(r: PipelineResult): number {
+  return r.violations.filter((v) => v.ruleId === 'groupSplit').length;
+}
+
+// 쌍별 표의 칸: status 첫 글자 + error/warn/dropped/groupSplit 수. 예: "rej e1 w0 d2 s0"
 function cell(r: PipelineResult): string {
   const e = errorCount(r);
-  return `${r.status.slice(0, 3)} e${e} w${r.violations.length - e} d${r.dropped.length}`;
+  return `${r.status.slice(0, 3)} e${e} w${r.violations.length - e} d${r.dropped.length} s${groupSplitCount(r)}`;
 }
 
 function evaluate(entry: RegistryEntry, pairs: Pair[], cells: PairCell): string[] {
@@ -46,6 +50,7 @@ function evaluate(entry: RegistryEntry, pairs: Pair[], cells: PairCell): string[
   let errors = 0;
   let warns = 0;
   let p1Dropped = 0;
+  let groupSplits = 0;
   let totalMs = 0;
   const status = { accepted: 0, degraded: 0, rejected: 0 };
 
@@ -58,6 +63,7 @@ function evaluate(entry: RegistryEntry, pairs: Pair[], cells: PairCell): string[
     cells.set(goldenKey(template.id, content.id), cell(result));
     errors += errorCount(result);
     warns += result.violations.filter((v) => v.severity === 'warn').length;
+    groupSplits += groupSplitCount(result);
     p1Dropped += result.dropped.filter((id) => content.items.find((i) => i.id === id)?.priority === 1).length;
 
     if (golden !== undefined) {
@@ -75,7 +81,7 @@ function evaluate(entry: RegistryEntry, pairs: Pair[], cells: PairCell): string[
     String(errors),
     String(warns),
     String(p1Dropped),
-    NONE, // TODO(Step 3): groupSplit 규칙이 생기면 그 위반 수를 센다.
+    String(groupSplits),
     `${status.accepted}/${status.degraded}/${status.rejected}`,
     pairs.length === 0 ? NONE : (totalMs / pairs.length).toFixed(3),
   ];
@@ -133,7 +139,7 @@ function main(): void {
     '',
     '## 쌍별 결과',
     '',
-    '- 칸: status(acc/deg/rej) e=error 수 w=warn 수 d=dropped 수, g=golden 맞은 슬롯/전체. ★ = golden 있는 쌍',
+    '- 칸: status(acc/deg/rej) e=error 수 w=warn 수 d=dropped 수 s=groupSplit 수, g=golden 맞은 슬롯/전체. ★ = golden 있는 쌍',
     '',
     pairTable(pairs, REGISTRY.filter((e) => e.implemented && e.oracleOnly !== true), cells),
     '',
