@@ -546,9 +546,14 @@ README 구성:
 | D-7 | golden 비교는 모양이 같은 카드끼리 통째로 교환한 배치도 정답으로 본다 (사용자 결정, 2026-10-05) | 카드 교환 허용 / 정확 일치 | 카드 순서만 다른 올바른 배치를 틀렸다고 세지 않는다. 비교 코드가 조금 복잡해짐 |
 | D-8 | roleHint가 없는 콘텐츠는 역할 미상으로 둔다 (사용자 결정, 2026-10-05) | 미상 / 길이로 추정 | 추정을 코드에 숨기지 않고 cost 항목으로 자리를 찾게 한다. 배치 품질은 떨어질 수 있음 |
 | D-9 | error 없이 warn이 1개라도 있으면 degraded (사용자 결정, 2026-10-05, Step 4에서 재확정) | warn 1개부터 / 임계값 | 기준이 한 문장. warn 1건과 5건이 같은 등급 |
+| D-10 | golden 5쌍: t01×c01(카드 2장), t02×c02(본문 과다), t04×c05(이미지 든 카드 3장), t05×c04(roleHint 없음 + 좁은 슬롯), t08×c07(사진·캡션 짝) (Claude 결정 — 🙋 사용자 위임, Step 1) | 카드·이미지·roleHint 없음을 고루 / 단순 쌍 위주 | 핵심 스토리(카드 섞임)와 D-6·D-8 상황을 golden으로 잴 수 있게 골랐다. 디자이너 판단 대신 Claude 판단이라 주관이 섞여 있음. 각 파일 note에 기준을 적었다. 사용자가 고치면 이 줄을 갱신 |
+| D-11 | D-7의 「모양이 같은 카드」 = 그 그룹에 직접 속한 슬롯의 수와 role 순서(DFS)가 같은 그룹 (Claude 결정, Step 1) | 슬롯 수·role 순서 / 슬롯 수만 / 박스 크기까지 | 손으로 판정하기 쉽다. 박스 크기가 달라도 같은 모양으로 봄. 카드 수가 적다는 가정으로 순열을 전부 돈다(`bench/golden.ts`) |
+| D-12 | bench에 쌍별 표(status·e/w/d·golden 점수)를 더하고 `pnpm render:all`로 전체 SVG를 한 번에 그린다 (Claude 결정, Step 1) | 추가 / matcher별 합계만 | Step 2의 실패 관찰을 쌍 단위로 할 수 있다. 결과 파일이 길어짐 |
 
 ## 부록 C. 진행 상황
 
-- 현재 Step: 0 완료 (2026-10-05)
-- 마지막 작업: 뼈대 + greedy end-to-end. `pnpm test` 통과 8 / skip 12, `pnpm typecheck` 오류 0, t01×c01×greedy는 rejected(cardA-sub overflow 1건), bench greedy goldenMatch 0.40
-- 다음 할 일: Step 1 (fixture 8+8, 🙋 golden 5쌍). 브랜치 `step-1-fixtures`. 이어받는 세션은 `docs/handoff.md`를 읽는다
+- 현재 Step: 1 완료 (2026-10-05)
+- 마지막 작업: fixture 8+8, golden 5쌍(D-10), golden 비교 D-7 반영(D-11), bench 쌍별 표, `pnpm render:all`(D-12). `pnpm test` 통과 11 / skip 12, typecheck 0, bench greedy goldenMatch 0.43 · status 40/0/24
+- fixture 상황표: 개수 일치 t01×c01·t04×c05 / 본문 과다 t02×c02 / 본문 부족 t06×c06 / 긴 제목 c03 / roleHint 없음 c04 / 카드형 c01·c05·c07 / 이미지 없음 c08(이미지 슬롯이 비는 쌍 t03·t07·t08) / 이미지가 남는 쌍 t03×c05·t03×c07 / 좁은 슬롯 t05
+- 브랜치 메모: 이 저장소의 클라우드 세션은 지정 브랜치 하나에만 푸시할 수 있어, Step마다 로컬 `step-N-*` 브랜치를 `--no-ff`로 세션 브랜치에 합쳐 Step 경계를 남긴다. `main` 병합은 사용자가 한다
+- 다음 할 일: Step 2 (실패 분류 + cost + Hungarian + oracle)
