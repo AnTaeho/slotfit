@@ -535,10 +535,11 @@ README 구성:
 |---|---|---|---|---|---|---|
 | F-1 | role 무시 | 들어온 순서대로 넣어 title 칸에 소제목(「무료배송」), 소제목 칸에 제목이 들어간다 | cost | t01×c01, t04×c05, t03×c08, t06×c06 | greedy | Step 2 해결: hungarian은 hint가 있는 항목을 맞는 role 칸에 넣는다(golden t01×c01 2/5 → 5/5) |
 | F-2 | 길이 무시 넘침 | 긴 문장을 한 줄짜리 칸에 넣어 넘친다(설명 → 소제목 칸, 본문 → 제목 칸) | cost | t01×c01, t05×c04 | greedy | Step 2 일부 해결: errors 27 → 14. roleHint 없는 t05×c04는 긴 글이 좁은 본문 칸에서 여전히 넘침(D-8의 한계) |
-| F-3 | 카드 섞임 | 한 카드에 다른 제품의 사진·이름·설명이 섞인다(card1 = p3 사진 + p1 이름), 사진과 다른 사진의 캡션이 짝지어진다 | 구조 | t04×c05, t08×c07 | greedy, hungarian | Step 2 미해결: hungarian도 t04×c05에서 card1 = p3 사진 + p1 이름·설명(golden 8/10). 순서 항이 사진을 p3→card1로 보낸다. Step 3 (TBD) |
+| F-3 | 카드 섞임 | 한 카드에 다른 제품의 사진·이름·설명이 섞인다(card1 = p3 사진 + p1 이름), 사진과 다른 사진의 캡션이 짝지어진다 | 구조 | t04×c05, t08×c07 | greedy, hungarian | Step 2 미해결: hungarian도 t04×c05에서 card1 = p3 사진 + p1 이름·설명(golden 8/10). Step 3 해결: hierarchical은 groupSplit 0, t04×c05·t08×c07 golden 10/10·5/5 |
 | F-4 | 맞는 자리인데 넘침 | 제목이 제목 칸에 들어갔지만 기본 글자 크기에서 한 줄을 넘는다. 글자를 줄이면 들어간다 | 사후 | t02×c03, t03×c03 | greedy | Step 4 (TBD) |
 | F-5 | 틀린 배치가 통과 | role이 다 틀린 배치(t04×c05)도 overflow만 없으면 accepted가 된다 | 사후 | t04×c05, t03×c08 | greedy | Step 4 (TBD) |
 | F-6 | priority와 role의 충돌 | p2 소제목·본문을 버리는 비용(30)이 role 불일치(20+α)보다 커서, p3 캡션을 버리고 기간·본문을 사진 캡션 칸에 넣는다. 캡션 칸에서 본문이 넘친다 | 사후 | t08×c07 | hungarian | Step 2에서 발견. 가중치를 이 fixture에 맞추지 않고 Step 4 roleMismatch·overflow가 잡게 둔다 |
+| F-7 | 카드가 제목 자리를 뺏음 | 카드 하나뿐인 템플릿에서 계층 매칭은 카드를 먼저 짝지어 슬롯을 다 쓰고, 남은 p1 제목을 버린다(totalCost 1007.5 vs hungarian 56.5) | 구조 | t09×c09 (t09×c01·c05도) | hierarchical | Step 3에서 발견, 감수(D-19). Step 4 priorityDropped가 거절로 잡는다 |
 
 ## 부록 B. 결정 로그
 
@@ -561,12 +562,14 @@ README 구성:
 | D-15 | kind 불일치는 Infinity 대신 큰 유한값 1,000,000 (Claude 결정, Step 2) | 유한 큰 값 / 금지 칸을 따로 표시 | Hungarian이 값을 빼고 더해 Infinity−Infinity=NaN이 난다. 1,000,000 > 최대 버림 + 최대 비움이라 최적해는 금지 짝을 고르지 않는다(oracle 테스트로 확인) |
 | D-16 | 「입력 순서 역전」을 쌍별 상대 위치 차이의 제곱 (i/(n−1) − j/(m−1))²로 근사 (Claude 결정, Step 2) | 위치 차이 제곱 / 위치 차이 절댓값 / 역전 쌍 수 | 역전 쌍 수는 두 짝을 함께 봐야 해서 쌍별 cost 합(assignment problem)으로 못 쓴다. 처음엔 절댓값으로 했으나 t02×c02에서 바른 순서와 엇갈린 순서가 동점(2.25)이 되어 순서가 뒤집혔다. 제곱(볼록)이면 엇갈린 배치가 항상 더 비싸다. 근사라 순서가 조금 어긋난 배치를 정확히 세지는 못함 |
 | D-17 | bruteForce는 oracle 전용: 슬롯 ≤ 6·항목 ≤ 7에서만 실행, bench·render:all에서 뺀다 (Claude 결정, Step 2) | oracle 전용 / bench에서 작은 쌍만 | fixture 최대 10×10은 전수 탐색이 수천만 가지. bench 합계를 다른 쌍 집합으로 내면 다른 행과 비교가 안 된다 |
+| D-18 | 계층 매칭 세부: 짝 없는 콘텐츠 그룹의 dummy 비용 = 항목 버림 비용 합(비관적), 짝지은 카드 안에서 버린 항목·빈 슬롯은 그대로 둠, 짝 없는 그룹의 항목·슬롯은 마지막 flat 단계로, 항목을 하나도 못 넣는 그룹 짝은 확정하지 않음 (Claude 결정, Step 3) | 이 방식 / 남는 항목도 다른 카드로 흘려보냄 | 카드 밖으로 새는 항목이 없어 groupSplit이 구조적으로 0. 대신 단계 사이에서 정보를 못 주고받아 전역 최적이 아니다(F-7) |
+| D-19 | 전역 최적이 아닌데도 계층 매칭을 택한 이유 (Claude 결정 — 🙋 사용자 위임, Step 3) | 계층 매칭 / flat Hungarian + groupSplit 벌점 / 제약 있는 전수 탐색 | 「카드가 찢어졌다」는 두 짝을 함께 봐야 알 수 있어 짝별 cost 합에 넣을 수 없다(D-16과 같은 이유). 계층 매칭은 다항 시간이고 단계마다 손으로 설명할 수 있다. 비최적 경우(F-7)는 p1 유실로 드러나므로 validation이 거절로 잡을 수 있다. 섞인 카드(틀린 정보)를 내보내는 것보다 드물게 제목을 잃고 거절하는 편이 낫다고 봤다. 사용자가 자기 말로 다시 쓰면 이 줄을 바꾼다 |
 
 ## 부록 C. 진행 상황
 
-- 현재 Step: 2 완료 (2026-10-05)
-- 마지막 작업: cost 네 항 + dummy 비용(D-13~D-16), Hungarian 직접 구현, bruteForce oracle(D-17), oracle 테스트. `pnpm test` 통과 24 / skip 4(hierarchical), typecheck 0
-- bench(64쌍): greedy goldenMatch 0.43 · errors 27 · 40/0/24 → hungarian 0.75 · errors 14 · 51/0/13. 카드 섞임(F-3)은 hungarian에서도 남음(t04×c05 golden 8/10)
-- Step 1 메모: fixture 상황표 — 개수 일치 t01×c01·t04×c05 / 본문 과다 t02×c02 / 본문 부족 t06×c06 / 긴 제목 c03 / roleHint 없음 c04 / 카드형 c01·c05·c07 / 이미지 없음 c08 / 이미지가 남는 쌍 t03×c05·t03×c07 / 좁은 슬롯 t05
+- 현재 Step: 3 완료 (2026-10-05)
+- 마지막 작업: hierarchical(D-18), groupSplit 규칙, 반례 fixture t09·c09(F-7). `pnpm test` 통과 31 / skip 0, typecheck 0
+- bench(81쌍, golden 5): greedy 0.43 · groupSplit 10 · 50/5/26, hungarian 0.75 · groupSplit 6 · 62/5/14, hierarchical 0.89 · groupSplit 0 · p1Dropped 3(t09) · 68/0/13
+- before/after SVG: `pnpm render t04-product-cards-3 c05-product-launch hungarian|hierarchical`, `pnpm render t08-gallery-pairs c07-exhibition hungarian|hierarchical` → `out/`
 - 브랜치 메모: 이 저장소의 클라우드 세션은 지정 브랜치 하나에만 푸시할 수 있어, Step마다 로컬 `step-N-*` 브랜치를 `--no-ff`로 세션 브랜치에 합쳐 Step 경계를 남긴다. `main` 병합은 사용자가 한다
-- 다음 할 일: Step 3 (계층 매칭 + groupSplit)
+- 다음 할 일: Step 4 (validation 규칙 3개 + fallback + 최종 판정)
