@@ -533,11 +533,12 @@ README 구성:
 
 | ID | 유형 | 증상 | 종류 (cost/구조/사후) | 재현 fixture | 발견 matcher | 해결 Step |
 |---|---|---|---|---|---|---|
-| F-1 | role 무시 | 들어온 순서대로 넣어 title 칸에 소제목(「무료배송」), 소제목 칸에 제목이 들어간다 | cost | t01×c01, t04×c05, t03×c08, t06×c06 | greedy | Step 2 (TBD) |
-| F-2 | 길이 무시 넘침 | 긴 문장을 한 줄짜리 칸에 넣어 넘친다(설명 → 소제목 칸, 본문 → 제목 칸) | cost | t01×c01, t05×c04 | greedy | Step 2 (TBD) |
-| F-3 | 카드 섞임 | 한 카드에 다른 제품의 사진·이름·설명이 섞인다(card1 = p3 사진 + p1 이름), 사진과 다른 사진의 캡션이 짝지어진다 | 구조 | t04×c05, t08×c07 | greedy | Step 3 (TBD) |
+| F-1 | role 무시 | 들어온 순서대로 넣어 title 칸에 소제목(「무료배송」), 소제목 칸에 제목이 들어간다 | cost | t01×c01, t04×c05, t03×c08, t06×c06 | greedy | Step 2 해결: hungarian은 hint가 있는 항목을 맞는 role 칸에 넣는다(golden t01×c01 2/5 → 5/5) |
+| F-2 | 길이 무시 넘침 | 긴 문장을 한 줄짜리 칸에 넣어 넘친다(설명 → 소제목 칸, 본문 → 제목 칸) | cost | t01×c01, t05×c04 | greedy | Step 2 일부 해결: errors 27 → 14. roleHint 없는 t05×c04는 긴 글이 좁은 본문 칸에서 여전히 넘침(D-8의 한계) |
+| F-3 | 카드 섞임 | 한 카드에 다른 제품의 사진·이름·설명이 섞인다(card1 = p3 사진 + p1 이름), 사진과 다른 사진의 캡션이 짝지어진다 | 구조 | t04×c05, t08×c07 | greedy, hungarian | Step 2 미해결: hungarian도 t04×c05에서 card1 = p3 사진 + p1 이름·설명(golden 8/10). 순서 항이 사진을 p3→card1로 보낸다. Step 3 (TBD) |
 | F-4 | 맞는 자리인데 넘침 | 제목이 제목 칸에 들어갔지만 기본 글자 크기에서 한 줄을 넘는다. 글자를 줄이면 들어간다 | 사후 | t02×c03, t03×c03 | greedy | Step 4 (TBD) |
 | F-5 | 틀린 배치가 통과 | role이 다 틀린 배치(t04×c05)도 overflow만 없으면 accepted가 된다 | 사후 | t04×c05, t03×c08 | greedy | Step 4 (TBD) |
+| F-6 | priority와 role의 충돌 | p2 소제목·본문을 버리는 비용(30)이 role 불일치(20+α)보다 커서, p3 캡션을 버리고 기간·본문을 사진 캡션 칸에 넣는다. 캡션 칸에서 본문이 넘친다 | 사후 | t08×c07 | hungarian | Step 2에서 발견. 가중치를 이 fixture에 맞추지 않고 Step 4 roleMismatch·overflow가 잡게 둔다 |
 
 ## 부록 B. 결정 로그
 
@@ -558,13 +559,14 @@ README 구성:
 | D-13 | cost 항목 = role 불일치 + 넘침 정도 + 너무 짧은 텍스트 + 입력 순서 차이, dummy 비용 = priority별 버림 / role별 비움 (Claude 결정 — 🙋 사용자 위임, Step 2) | 네 항 모두 / role+넘침만 / role만 | spec 후보 다섯을 다 넣었다. roleHint 없음(D-8)은 role 항 0이라 길이·순서 항이 자리를 정한다. 항이 많아 손 계산이 길어짐 |
 | D-14 | 가중치: role 불일치 20, 줄여야 들어감 2, minFontSize에서도 넘치는 줄당 15, 짧음 최대 4, 순서 차이 최대 3 / 버림 p1 1000·p2 30·p3 10 / 비움 title 50·subtitle·body·image 10·caption 5 (Claude 결정 — 🙋 사용자 위임, Step 2) | 이 값 / role을 순서보다 약하게 / 넘침을 role보다 강하게 | 우선순위: p1 보존 ≫ 제목 칸 채움 > p2 보존 > role > 넘침 > 순서·짧음. 순서 항이 카드 순서를 정해 t04×c05에서 카드 섞임이 남는다(F-3) — Step 3의 동기 |
 | D-15 | kind 불일치는 Infinity 대신 큰 유한값 1,000,000 (Claude 결정, Step 2) | 유한 큰 값 / 금지 칸을 따로 표시 | Hungarian이 값을 빼고 더해 Infinity−Infinity=NaN이 난다. 1,000,000 > 최대 버림 + 최대 비움이라 최적해는 금지 짝을 고르지 않는다(oracle 테스트로 확인) |
-| D-16 | 「입력 순서 역전」을 쌍별 상대 위치 차이 \|i/(n−1) − j/(m−1)\|로 근사 (Claude 결정, Step 2) | 위치 차이 / 역전 쌍 수 | 역전 쌍 수는 두 짝을 함께 봐야 해서 쌍별 cost 합(assignment problem)으로 못 쓴다. 근사라 순서가 조금 어긋난 배치를 정확히 세지는 못함 |
+| D-16 | 「입력 순서 역전」을 쌍별 상대 위치 차이의 제곱 (i/(n−1) − j/(m−1))²로 근사 (Claude 결정, Step 2) | 위치 차이 제곱 / 위치 차이 절댓값 / 역전 쌍 수 | 역전 쌍 수는 두 짝을 함께 봐야 해서 쌍별 cost 합(assignment problem)으로 못 쓴다. 처음엔 절댓값으로 했으나 t02×c02에서 바른 순서와 엇갈린 순서가 동점(2.25)이 되어 순서가 뒤집혔다. 제곱(볼록)이면 엇갈린 배치가 항상 더 비싸다. 근사라 순서가 조금 어긋난 배치를 정확히 세지는 못함 |
 | D-17 | bruteForce는 oracle 전용: 슬롯 ≤ 6·항목 ≤ 7에서만 실행, bench·render:all에서 뺀다 (Claude 결정, Step 2) | oracle 전용 / bench에서 작은 쌍만 | fixture 최대 10×10은 전수 탐색이 수천만 가지. bench 합계를 다른 쌍 집합으로 내면 다른 행과 비교가 안 된다 |
 
 ## 부록 C. 진행 상황
 
-- 현재 Step: 1 완료 (2026-10-05)
-- 마지막 작업: fixture 8+8, golden 5쌍(D-10), golden 비교 D-7 반영(D-11), bench 쌍별 표, `pnpm render:all`(D-12). `pnpm test` 통과 11 / skip 12, typecheck 0, bench greedy goldenMatch 0.43 · status 40/0/24
-- fixture 상황표: 개수 일치 t01×c01·t04×c05 / 본문 과다 t02×c02 / 본문 부족 t06×c06 / 긴 제목 c03 / roleHint 없음 c04 / 카드형 c01·c05·c07 / 이미지 없음 c08(이미지 슬롯이 비는 쌍 t03·t07·t08) / 이미지가 남는 쌍 t03×c05·t03×c07 / 좁은 슬롯 t05
+- 현재 Step: 2 완료 (2026-10-05)
+- 마지막 작업: cost 네 항 + dummy 비용(D-13~D-16), Hungarian 직접 구현, bruteForce oracle(D-17), oracle 테스트. `pnpm test` 통과 24 / skip 4(hierarchical), typecheck 0
+- bench(64쌍): greedy goldenMatch 0.43 · errors 27 · 40/0/24 → hungarian 0.75 · errors 14 · 51/0/13. 카드 섞임(F-3)은 hungarian에서도 남음(t04×c05 golden 8/10)
+- Step 1 메모: fixture 상황표 — 개수 일치 t01×c01·t04×c05 / 본문 과다 t02×c02 / 본문 부족 t06×c06 / 긴 제목 c03 / roleHint 없음 c04 / 카드형 c01·c05·c07 / 이미지 없음 c08 / 이미지가 남는 쌍 t03×c05·t03×c07 / 좁은 슬롯 t05
 - 브랜치 메모: 이 저장소의 클라우드 세션은 지정 브랜치 하나에만 푸시할 수 있어, Step마다 로컬 `step-N-*` 브랜치를 `--no-ff`로 세션 브랜치에 합쳐 Step 경계를 남긴다. `main` 병합은 사용자가 한다
-- 다음 할 일: Step 2 (실패 분류 + cost + Hungarian + oracle)
+- 다음 할 일: Step 3 (계층 매칭 + groupSplit)
