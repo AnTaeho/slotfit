@@ -1,0 +1,10 @@
+{
+  "templateId": "t02-notice-two-body",
+  "contentId": "c02-cafe-notice",
+  "assignment": [
+    { "slotId": "title", "contentId": "title" },
+    { "slotId": "body1", "contentId": "body-menu" },
+    { "slotId": "body2", "contentId": "body-event" }
+  ],
+  "note": "본문 4개 중 2개만 들어간다. priority 2인 신메뉴·할인을 들어온 순서대로 넣고 priority 3인 운영 시간·텀블러는 버린다"
+}

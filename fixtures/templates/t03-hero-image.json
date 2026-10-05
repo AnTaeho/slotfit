@@ -1,0 +1,19 @@
+{
+  "id": "t03-hero-image",
+  "description": "제목 + 큰 이미지 1장 + 소제목/본문/캡션. 이미지 슬롯 기본형(이미지가 남거나 비는 상황 확인용)",
+  "root": {
+    "id": "root", "type": "frame", "box": { "x": 0, "y": 0, "w": 600, "h": 500 },
+    "children": [
+      { "id": "title", "type": "text", "role": "title",
+        "box": { "x": 40, "y": 30, "w": 520, "h": 60 }, "fontSize": 32, "minFontSize": 22, "maxLines": 1 },
+      { "id": "hero", "type": "image", "role": "image",
+        "box": { "x": 40, "y": 100, "w": 520, "h": 200 } },
+      { "id": "subtitle", "type": "text", "role": "subtitle",
+        "box": { "x": 40, "y": 315, "w": 520, "h": 36 }, "fontSize": 22, "minFontSize": 16, "maxLines": 1 },
+      { "id": "body", "type": "text", "role": "body",
+        "box": { "x": 40, "y": 360, "w": 520, "h": 90 }, "fontSize": 16, "minFontSize": 12, "maxLines": 3 },
+      { "id": "caption", "type": "text", "role": "caption",
+        "box": { "x": 40, "y": 460, "w": 520, "h": 24 }, "fontSize": 12, "minFontSize": 10, "maxLines": 1 }
+    ]
+  }
+}

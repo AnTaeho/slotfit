@@ -1,0 +1,8 @@
+{
+  "id": "c06-minimal",
+  "description": "제목 1개 + 본문 1개뿐인 짧은 공지(본문 부족). 남는 슬롯을 비워 두는지 확인용",
+  "items": [
+    { "id": "title", "kind": "text", "roleHint": "title", "text": "임시 휴무 안내", "priority": 1 },
+    { "id": "body", "kind": "text", "roleHint": "body", "text": "10월 9일 한글날은 하루 쉽니다", "priority": 1 }
+  ]
+}

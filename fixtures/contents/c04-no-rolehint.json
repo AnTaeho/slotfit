@@ -1,0 +1,10 @@
+{
+  "id": "c04-no-rolehint",
+  "description": "roleHint가 하나도 없는 콘텐츠(roleHint 없음, D-8). 긴 문장이 맨 앞에 온다",
+  "items": [
+    { "id": "n-body", "kind": "text", "text": "매주 토요일 오전 10시, 동네 공원에서 함께 걷고 이야기 나눠요. 처음 오셔도 괜찮아요", "priority": 2 },
+    { "id": "n-title", "kind": "text", "text": "토요 산책 모임", "priority": 1 },
+    { "id": "n-note", "kind": "text", "text": "참가비 없음", "priority": 3 },
+    { "id": "n-sub", "kind": "text", "text": "누구나 환영", "priority": 2 }
+  ]
+}

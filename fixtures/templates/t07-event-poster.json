@@ -1,0 +1,21 @@
+{
+  "id": "t07-event-poster",
+  "description": "두 줄 제목 + 포스터 이미지 + 소제목/본문 + 캡션 2개. 긴 제목이 들어갈 자리와 이미지 없이 오는 콘텐츠 확인용",
+  "root": {
+    "id": "root", "type": "frame", "box": { "x": 0, "y": 0, "w": 600, "h": 700 },
+    "children": [
+      { "id": "title", "type": "text", "role": "title",
+        "box": { "x": 40, "y": 30, "w": 520, "h": 100 }, "fontSize": 34, "minFontSize": 24, "maxLines": 2 },
+      { "id": "poster", "type": "image", "role": "image",
+        "box": { "x": 40, "y": 150, "w": 520, "h": 260 } },
+      { "id": "subtitle", "type": "text", "role": "subtitle",
+        "box": { "x": 40, "y": 430, "w": 520, "h": 36 }, "fontSize": 22, "minFontSize": 16, "maxLines": 1 },
+      { "id": "body", "type": "text", "role": "body",
+        "box": { "x": 40, "y": 480, "w": 520, "h": 120 }, "fontSize": 16, "minFontSize": 12, "maxLines": 4 },
+      { "id": "caption-left", "type": "text", "role": "caption",
+        "box": { "x": 40, "y": 620, "w": 250, "h": 40 }, "fontSize": 12, "minFontSize": 10, "maxLines": 2 },
+      { "id": "caption-right", "type": "text", "role": "caption",
+        "box": { "x": 310, "y": 620, "w": 250, "h": 40 }, "fontSize": 12, "minFontSize": 10, "maxLines": 2 }
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "templateId": "t05-narrow-banner",
+  "contentId": "c04-no-rolehint",
+  "assignment": [
+    { "slotId": "title", "contentId": "n-title" },
+    { "slotId": "subtitle", "contentId": "n-sub" },
+    { "slotId": "body-left", "contentId": "n-body" },
+    { "slotId": "body-right", "contentId": null },
+    { "slotId": "caption", "contentId": "n-note" }
+  ],
+  "note": "roleHint가 없어도 디자이너는 글의 길이와 말투로 자리를 고른다. 긴 문장은 좁은 본문 칸에서 넘칠 수 있지만 그건 배치가 아니라 validation/fallback이 다룰 일. 본문 칸 하나는 비워 둔다"
+}
