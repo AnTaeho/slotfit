@@ -7,7 +7,7 @@ import { ContentSchema, GoldenSchema, TemplateSchema } from '../schema';
 import type { Content, Golden, Template } from '../schema';
 
 // 가정: 파일 이름은 `<id>.json`, golden은 `<templateId>__<contentId>.json`.
-export const FIXTURES_DIR = fileURLToPath(new URL('../../fixtures/', import.meta.url));
+const FIXTURES_DIR = fileURLToPath(new URL('../../fixtures/', import.meta.url));
 
 function readJson<T>(path: string, schema: z.ZodType<T>): T {
   const raw: unknown = JSON.parse(readFileSync(path, 'utf8'));

@@ -6,8 +6,9 @@
 // 그 자리가 얼마나 중요한지(role)로 정한다. 그러면 「누구를 어디에, 누구를 보내고, 어디를 비울지」가
 // 한 번의 자리표 계산으로 함께 정해진다.
 import type { MatchContext } from '../context';
-import type { MatchResult } from '../schema';
-import { buildCostMatrix, resultFromPermutation } from './costMatrix';
+import type { ContentItem, MatchResult, Slot } from '../schema';
+import { buildCostMatrix, readSolution, toMatchResult } from './costMatrix';
+import type { SubproblemResult } from './costMatrix';
 import type { Matcher } from './types';
 
 // N×N 행렬의 최소 비용 완전 배정. 반환값 rowToCol[행] = 열(0부터).
@@ -99,9 +100,19 @@ export function solveAssignment(matrix: number[][]): number[] {
   return rowToCol;
 }
 
+// 항목 목록 × 슬롯 목록을 dummy 행렬로 만들어 풀고 짝·버림·비용으로 읽는다. 둘 다 비면 0×0, cost 0.
+// hungarian은 전체를 한 번, hierarchical은 그룹 쌍과 나머지를 하위 문제로 여러 번 푼다.
+export function solveSubproblem(
+  ctx: MatchContext,
+  items: readonly ContentItem[],
+  slots: readonly Slot[],
+): SubproblemResult {
+  const matrix = buildCostMatrix(ctx, items, slots);
+  return readSolution(matrix, solveAssignment(matrix), items, slots);
+}
+
 function match(ctx: MatchContext): MatchResult {
-  const { matrix } = buildCostMatrix(ctx);
-  return resultFromPermutation(ctx, solveAssignment(matrix));
+  return toMatchResult(ctx, [solveSubproblem(ctx, ctx.content.items, ctx.slots)]);
 }
 
 export const hungarian: Matcher = { name: 'hungarian', match };

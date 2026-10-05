@@ -29,3 +29,9 @@ export function matcherNames(): string[] {
 export function withinLimit(entry: RegistryEntry, ctx: MatchContext): boolean {
   return entry.oracleOnly === true ? bruteForceFits(ctx) : true;
 }
+
+// bench·render:all처럼 모든 template × content 쌍을 도는 곳에서 실행할 matcher인가.
+// 미구현(D-4)과 oracle 전용(D-17)은 뺀다.
+export function runsOnEveryPair(entry: RegistryEntry): boolean {
+  return entry.implemented && entry.oracleOnly !== true;
+}

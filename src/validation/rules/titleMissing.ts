@@ -8,11 +8,10 @@ const severity = 'error'; // D-20
 
 // title 슬롯마다 contentId가 null이면 위반 1개. title 슬롯이 없는 템플릿이면 위반도 없다.
 // title 칸에 title이 아닌 항목이 들어간 경우는 roleMismatch가 따로 잡는다.
-function check(ctx: MatchContext, r: MatchResult, _adj: Adjustments): Violation[] {
-  const titleSlotIds = new Set(ctx.slots.filter((s) => s.role === 'title').map((s) => s.id));
+function check(ctx: MatchContext, result: MatchResult, _adj: Adjustments): Violation[] {
   const violations: Violation[] = [];
-  for (const { slotId, contentId } of r.assignment) {
-    if (!titleSlotIds.has(slotId) || contentId !== null) continue;
+  for (const { slotId, contentId } of result.assignment) {
+    if (contentId !== null || ctx.slotsById[slotId]?.role !== 'title') continue;
     violations.push({ ruleId: id, severity, slotId, detail: `title 슬롯 ${slotId}이 비어 있다` });
   }
   return violations;

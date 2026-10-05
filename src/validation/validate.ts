@@ -1,4 +1,4 @@
-// 규칙 목록을 전부 실행해 위반을 합친다.
+// 규칙 목록을 전부 실행해 위반을 합친다. 위반 순서 = 규칙 순서, 규칙 안에서는 규칙이 낸 순서.
 import type { MatchContext } from '../context';
 import type { Adjustments, MatchResult, Violation } from '../schema';
 import { groupSplit } from './rules/groupSplit';
@@ -8,13 +8,13 @@ import { roleMismatch } from './rules/roleMismatch';
 import { titleMissing } from './rules/titleMissing';
 import type { Rule } from './types';
 
-export const DEFAULT_RULES: Rule[] = [overflow, titleMissing, priorityDropped, groupSplit, roleMismatch];
+const DEFAULT_RULES: Rule[] = [overflow, titleMissing, priorityDropped, groupSplit, roleMismatch];
 
 export function validate(
   ctx: MatchContext,
-  r: MatchResult,
+  result: MatchResult,
   adj: Adjustments,
   rules: Rule[] = DEFAULT_RULES,
 ): Violation[] {
-  return rules.flatMap((rule) => rule.check(ctx, r, adj));
+  return rules.flatMap((rule) => rule.check(ctx, result, adj));
 }

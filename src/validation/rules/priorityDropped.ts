@@ -7,9 +7,9 @@ const id = 'priorityDropped';
 const severity = 'error'; // D-20
 
 // dropped 중 priority 1인 항목마다 위반 1개. 순서는 dropped 순서를 따른다.
-function check(ctx: MatchContext, r: MatchResult, _adj: Adjustments): Violation[] {
+function check(ctx: MatchContext, result: MatchResult, _adj: Adjustments): Violation[] {
   const violations: Violation[] = [];
-  for (const contentId of r.dropped) {
+  for (const contentId of result.dropped) {
     if (ctx.itemsById[contentId]?.priority !== 1) continue;
     violations.push({ ruleId: id, severity, contentId, detail: `priority 1 항목 ${contentId}이 버려졌다` });
   }
