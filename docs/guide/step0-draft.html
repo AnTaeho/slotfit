@@ -1,0 +1,552 @@
+<title>SlotFit Step 0 읽기 가이드</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* 레이아웃: 한 단 읽기 문서. 본문 폭 약 46rem, 표·코드·그림만 자기 상자 안에서 가로 스크롤. */
+:root {
+  --bg: #f3f5f8;
+  --surface: #ffffff;
+  --ink: #18212f;
+  --muted: #5b6779;
+  --line: #d5dbe5;
+  --accent: #1f5fbf;
+  --accent-soft: #e4edfb;
+  --ok: #0e8f52;
+  --ok-soft: #dff4e9;
+  --err: #c4291c;
+  --err-soft: #fbe5e2;
+  --empty: #7b8798;
+  --code-bg: #eef1f6;
+  --font-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111620; --surface: #1a212e; --ink: #e6ebf3; --muted: #9aa6b8; --line: #2e3848;
+    --accent: #7fb0ff; --accent-soft: #1d2c47; --ok: #4fd08f; --ok-soft: #153526;
+    --err: #ff8a7d; --err-soft: #40201d; --empty: #8c98a9; --code-bg: #141a25;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111620; --surface: #1a212e; --ink: #e6ebf3; --muted: #9aa6b8; --line: #2e3848;
+  --accent: #7fb0ff; --accent-soft: #1d2c47; --ok: #4fd08f; --ok-soft: #153526;
+  --err: #ff8a7d; --err-soft: #40201d; --empty: #8c98a9; --code-bg: #141a25;
+  color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.75;
+  padding-inline: 20px; padding-block: 40px 80px;
+}
+main { max-width: 46rem; margin-inline: auto; display: flex; flex-direction: column; gap: 56px; }
+section { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+h1 { font-size: 2rem; line-height: 1.3; margin: 0; text-wrap: balance; }
+h2 { font-size: 1.4rem; line-height: 1.35; margin: 0; padding-top: 20px; border-top: 2px solid var(--ink); text-wrap: balance; }
+h3 { font-size: 1.08rem; margin: 12px 0 0; }
+p, ul, ol { margin: 0; }
+ul, ol { padding-left: 1.3em; display: flex; flex-direction: column; gap: 6px; }
+.lead { color: var(--muted); font-size: 1.05rem; }
+.eyebrow { font-family: var(--font-mono); font-size: .8rem; letter-spacing: .08em; color: var(--accent); }
+code { font-family: var(--font-mono); font-size: .88em; background: var(--code-bg); padding: .1em .35em; border-radius: 3px; overflow-wrap: anywhere; }
+pre { margin: 0; background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; overflow-x: auto; font-family: var(--font-mono); font-size: .82rem; line-height: 1.65; }
+pre code { background: none; padding: 0; font-size: inherit; overflow-wrap: normal; }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .92rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); white-space: nowrap; }
+.note { background: var(--accent-soft); border-radius: 6px; padding: 14px 16px; }
+.note strong { color: var(--accent); }
+.tag { display: inline-block; font-size: .78rem; font-weight: 600; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
+.tag.ok { background: var(--ok-soft); color: var(--ok); }
+.tag.err { background: var(--err-soft); color: var(--err); }
+.tag.todo { background: var(--code-bg); color: var(--empty); }
+figure { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+figure .frame { background: #ffffff; border: 1px solid var(--line); border-radius: 6px; padding: 12px; overflow-x: auto; }
+figure svg { max-width: 100%; height: auto; display: block; margin-inline: auto; }
+figcaption { color: var(--muted); font-size: .88rem; }
+nav ol { columns: 2; column-gap: 32px; display: block; }
+nav li { margin-bottom: 4px; break-inside: avoid; }
+a { color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.flow { list-style: none; padding: 0; counter-reset: f; gap: 0; }
+.flow li { counter-increment: f; display: grid; grid-template-columns: 2.2rem 1fr; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.flow li::before { content: counter(f); font-family: var(--font-mono); font-weight: 600; color: var(--accent); }
+.flow li > div { min-width: 0; }
+.file { font-family: var(--font-mono); font-size: .85rem; color: var(--muted); }
+.read { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 18px 18px 20px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.read h3 { margin: 0; }
+.depth { font-size: .8rem; color: var(--muted); }
+@media (max-width: 560px) { nav ol { columns: 1; } h1 { font-size: 1.6rem; } }
+</style>
+
+<main>
+<header>
+  <section>
+    <span class="eyebrow">SLOTFIT · STEP 0 · 뼈대</span>
+    <h1>처음 읽는 사람을 위한 Step 0 코드 가이드</h1>
+    <p class="lead">Step 0에서 만든 것, 그 코드가 실제로 무슨 일을 하는지, 어떤 순서로 읽으면 되는지를 처음 보는 사람 기준으로 풀어 썼습니다. 코드를 옆에 열어 두고 위에서부터 따라 읽으면 됩니다.</p>
+    <nav aria-label="목차">
+      <ol>
+        <li><a href="#what">Step 0에서 한 일</a></li>
+        <li><a href="#words">먼저 알아 둘 말 일곱 개</a></li>
+        <li><a href="#flow">입력에서 결과까지 한 바퀴</a></li>
+        <li><a href="#picture">실제 결과 그림 읽기</a></li>
+        <li><a href="#reading">파일별 읽기 순서</a></li>
+        <li><a href="#tests">테스트가 지키는 것</a></li>
+        <li><a href="#bench">bench 표 읽기</a></li>
+        <li><a href="#todo">아직 비어 있는 자리</a></li>
+        <li><a href="#try">직접 돌려 보기</a></li>
+        <li><a href="#decided">Claude가 정한 것</a></li>
+        <li><a href="#choose">사용자가 고른 네 가지</a></li>
+        <li><a href="#interview">꼭 읽을 함수와 예상 질문</a></li>
+      </ol>
+    </nav>
+  </section>
+</header>
+
+<section id="what">
+  <h2>Step 0에서 한 일</h2>
+  <p>Step 0의 목표는 집의 골조를 세우는 일과 같습니다. 방마다 벽과 문의 위치를 먼저 정하고, 그중 방 하나에만 가구를 넣어 실제로 살아 볼 수 있게 했습니다.</p>
+  <ul>
+    <li><strong>자리를 정했습니다.</strong> 앞으로 만들 모든 파일을 미리 만들고, 각 함수가 무엇을 받고 무엇을 돌려주는지 적어 두었습니다. 이 약속을 코드에서는 타입과 시그니처라고 부릅니다.</li>
+    <li><strong>길 하나를 끝까지 뚫었습니다.</strong> JSON 파일을 읽고 → 가장 단순한 배치 방법(greedy)으로 넣고 → 글자가 넘치는지 검사하고 → 합격 여부를 정하고 → 그림과 표로 내보냅니다.</li>
+    <li><strong>나머지는 빈칸으로 두었습니다.</strong> 더 똑똑한 배치 방법 세 개, 검사 규칙 네 개, 문제를 고치는 단계는 이름표만 붙어 있고 속은 비어 있습니다. 어느 Step에서 채울지 주석에 적혀 있습니다.</li>
+  </ul>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>확인한 것</th><th>명령</th><th>결과</th></tr></thead>
+    <tbody>
+      <tr><td>타입 오류가 없는가</td><td><code>pnpm typecheck</code></td><td>오류 0</td></tr>
+      <tr><td>테스트가 통과하는가</td><td><code>pnpm test</code></td><td>통과 8, 건너뜀 12 (건너뛴 것은 아직 안 만든 matcher 세 개 몫)</td></tr>
+      <tr><td>그림이 나오는가</td><td><code>pnpm render t01-sale-cards c01-summer-sale greedy</code></td><td>SVG 생성, 판정은 <span class="tag err">rejected</span></td></tr>
+      <tr><td>비교표가 나오는가</td><td><code>pnpm bench</code></td><td>greedy 행이 채워지고 나머지 세 행은 "-"</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="note"><strong>rejected가 나왔는데 성공인 이유.</strong> greedy는 일부러 단순하게 만든 출발점입니다. 이 프로젝트의 이야기는 「단순한 방법이 이렇게 틀린다 → 그래서 다음 방법이 필요하다」로 이어지므로, 지금은 틀리는 모습이 정확히 드러나는 것이 목표입니다.</div>
+</section>
+
+<section id="words">
+  <h2>먼저 알아 둘 말 일곱 개</h2>
+  <p>코드 전체에 이 일곱 단어가 반복해서 나옵니다. 포스터 한 장을 만드는 상황으로 생각하면 됩니다.</p>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>말</th><th>뜻</th><th>포스터에 빗대면</th></tr></thead>
+    <tbody>
+      <tr><td>Template<br>템플릿</td><td>빈칸이 뚫린 디자인 양식. 상자 안에 상자가 들어가는 모양의 JSON입니다.</td><td>제목 칸 하나, 카드 두 장이 그려진 빈 포스터</td></tr>
+      <tr><td>Slot<br>슬롯</td><td>글이나 그림을 넣을 수 있는 빈칸 하나. 위치, 크기, 글자 크기, 최대 줄 수를 가집니다.</td><td>「제목 칸」, 「카드 A의 소제목 칸」</td></tr>
+      <tr><td>Group<br>그룹</td><td>함께 다뤄야 하는 슬롯 묶음.</td><td>카드 한 장 (소제목 칸 + 설명 칸)</td></tr>
+      <tr><td>Content<br>콘텐츠</td><td>빈칸에 넣을 글 조각들의 목록. 순서는 들어온 순서 그대로입니다.</td><td>「여름 세일」, 「무료배송」, 「전 품목 20% 할인」…</td></tr>
+      <tr><td>Assignment<br>배치</td><td>「어느 슬롯에 어느 콘텐츠를 넣었는가」를 적은 표.</td><td>제목 칸 ← 「여름 세일」</td></tr>
+      <tr><td>Matcher<br>매처</td><td>배치를 만들어 내는 방법. 같은 입력을 받아도 방법마다 다른 배치가 나옵니다.</td><td>포스터를 채우는 사람. 꼼꼼한 사람과 대충 하는 사람이 있습니다.</td></tr>
+      <tr><td>Violation<br>위반</td><td>배치 결과가 규칙을 어긴 곳 하나. error(심각)와 warn(주의) 두 등급입니다.</td><td>「카드 A 소제목 칸에서 글자가 넘쳤다」</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section id="flow">
+  <h2>입력에서 결과까지 한 바퀴</h2>
+  <p>프로그램이 한 번 도는 동안 일어나는 일을 순서대로 적었습니다. 괄호 안은 그 일을 하는 파일입니다.</p>
+  <ol class="flow">
+    <li><div><strong>JSON 파일을 읽고 모양을 검사합니다.</strong> <span class="file">src/io/loader.ts + src/schema/</span><br>템플릿과 콘텐츠 파일을 읽어서, 필요한 항목이 빠졌거나 오타가 있으면 여기서 바로 멈춥니다.</div></li>
+    <li><div><strong>자주 쓸 정보를 한 번만 계산해 둡니다.</strong> <span class="file">src/context.ts + src/tree/traverse.ts</span><br>템플릿은 상자 속 상자 구조라 매번 뒤지면 번거롭습니다. 슬롯만 뽑아 한 줄로 세운 목록 등을 미리 만들어 <code>MatchContext</code>라는 꾸러미에 담습니다.</div></li>
+    <li><div><strong>매처가 배치를 만듭니다.</strong> <span class="file">src/matchers/greedy.ts</span><br>꾸러미를 받아 「어느 슬롯에 무엇을 넣을지」를 정해 <code>MatchResult</code>로 돌려줍니다.</div></li>
+    <li><div><strong>규칙으로 검사합니다.</strong> <span class="file">src/validation/</span><br>규칙을 하나씩 돌려 위반 목록을 만듭니다. 지금 실제로 검사하는 규칙은 「글자 넘침(overflow)」 하나입니다.</div></li>
+    <li><div><strong>위반이 있으면 고쳐 보고 다시 검사합니다.</strong> <span class="file">src/fallback/</span><br>글자 크기를 줄이는 것 같은 대응을 최대 5번까지 시도하는 자리입니다. 지금은 대응 단계가 하나도 없어서 그냥 지나갑니다.</div></li>
+    <li><div><strong>최종 판정을 내립니다.</strong> <span class="file">src/pipeline.ts</span><br>error가 남아 있으면 <code>rejected</code>, warn만 있으면 <code>degraded</code>, 아무것도 없으면 <code>accepted</code>입니다.</div></li>
+    <li><div><strong>눈으로 볼 수 있게 내보냅니다.</strong> <span class="file">src/render/svg.ts · bench/evaluate.ts</span><br>한 건은 그림(SVG)으로, 여러 건은 비교표(마크다운)로 만듭니다.</div></li>
+  </ol>
+  <p>2번부터 6번까지를 한 함수로 묶은 것이 <code>pipeline.ts</code>의 <code>run()</code>입니다. 이 함수 하나만 이해하면 전체 흐름이 잡힙니다.</p>
+</section>
+
+<section id="picture">
+  <h2>실제 결과 그림 읽기</h2>
+  <p>아래는 <code>pnpm render t01-sale-cards c01-summer-sale greedy</code>가 만든 파일 그대로입니다. 초록 상자는 문제없는 칸, 빨간 상자는 error가 걸린 칸, 점선은 카드(그룹)의 테두리입니다.</p>
+  <figure>
+    <div class="frame"><svg xmlns="http://www.w3.org/2000/svg" width="600" height="444" viewBox="0 0 600 444">
+<rect x="0" y="0" width="600" height="444" fill="#ffffff"/>
+<rect x="0" y="0" width="600" height="400" fill="none" stroke="#667085"/>
+<rect x="40" y="120" width="250" height="240" fill="none" stroke="#667085" stroke-dasharray="6 4"><title>cardA</title></rect>
+<rect x="310" y="120" width="250" height="240" fill="none" stroke="#667085" stroke-dasharray="6 4"><title>cardB</title></rect>
+<rect x="40" y="30" width="520" height="60" fill="#12b76a" fill-opacity="0.12" stroke="#12b76a"><title>title (title) ← c1-sub</title></rect>
+<text x="40" y="62" font-size="32" font-family="sans-serif" fill="#101828" xml:space="preserve">무료배송</text>
+<rect x="56" y="136" width="218" height="40" fill="#d92d20" fill-opacity="0.12" stroke="#d92d20"><title>cardA-sub (subtitle) ← c1-body</title></rect>
+<text x="56" y="156" font-size="20" font-family="sans-serif" fill="#101828" xml:space="preserve">3만원 이상 구매 시 전국</text>
+<text x="56" y="184" font-size="20" font-family="sans-serif" fill="#101828" xml:space="preserve"> 무료배송</text>
+<rect x="56" y="186" width="218" height="150" fill="#12b76a" fill-opacity="0.12" stroke="#12b76a"><title>cardA-body (body) ← title</title></rect>
+<text x="56" y="202" font-size="16" font-family="sans-serif" fill="#101828" xml:space="preserve">여름 세일</text>
+<rect x="326" y="136" width="218" height="40" fill="#12b76a" fill-opacity="0.12" stroke="#12b76a"><title>cardB-sub (subtitle) ← c2-sub</title></rect>
+<text x="326" y="156" font-size="20" font-family="sans-serif" fill="#101828" xml:space="preserve">할인</text>
+<rect x="326" y="186" width="218" height="150" fill="#12b76a" fill-opacity="0.12" stroke="#12b76a"><title>cardB-body (body) ← c2-body</title></rect>
+<text x="326" y="202" font-size="16" font-family="sans-serif" fill="#101828" xml:space="preserve">전 품목 20% 할인</text>
+<text x="12" y="422" font-size="14" font-family="sans-serif" fill="#101828" dominant-baseline="middle">status: rejected · matcher: greedy · error 1 · warn 0 · dropped 0</text>
+</svg></div>
+    <figcaption>out/t01-sale-cards__c01-summer-sale__greedy.svg — 상자에 마우스를 올리면 「슬롯 이름 (역할) ← 들어간 콘텐츠」가 보입니다.</figcaption>
+  </figure>
+  <p>사람이 보면 이상한 점이 세 군데 있습니다. 그런데 프로그램은 그중 한 군데만 잡았습니다.</p>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>슬롯</th><th>원래 들어가야 할 것</th><th>greedy가 넣은 것</th><th>프로그램의 판정</th></tr></thead>
+    <tbody>
+      <tr><td>title (제목)</td><td>여름 세일</td><td>무료배송</td><td><span class="tag ok">정상</span> 넘치지 않아서 통과</td></tr>
+      <tr><td>cardA-sub (소제목)</td><td>무료배송</td><td>3만원 이상 구매 시 전국 무료배송</td><td><span class="tag err">error</span> 한 줄 칸에 두 줄</td></tr>
+      <tr><td>cardA-body (설명)</td><td>3만원 이상 구매 시 전국 무료배송</td><td>여름 세일</td><td><span class="tag ok">정상</span> 넘치지 않아서 통과</td></tr>
+      <tr><td>cardB-sub (소제목)</td><td>할인</td><td>할인</td><td><span class="tag ok">정상</span></td></tr>
+      <tr><td>cardB-body (설명)</td><td>전 품목 20% 할인</td><td>전 품목 20% 할인</td><td><span class="tag ok">정상</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="note"><strong>초록이라고 옳은 것은 아닙니다.</strong> 제목 칸에 「무료배송」이 들어간 것은 분명히 틀렸지만 초록입니다. 지금 켜져 있는 검사가 「글자가 넘치는가」 하나뿐이기 때문입니다. 「역할이 맞는가」를 보는 규칙(roleMismatch)은 Step 4에서 채웁니다. 다섯 칸 중 정답과 같은 칸은 두 칸이고, bench 표의 goldenMatch 0.40이 이 숫자입니다.</div>
+</section>
+
+<section id="reading">
+  <h2>파일별 읽기 순서</h2>
+  <p>아래 순서대로 읽으면 앞에서 본 것이 뒤에서 쓰입니다. 「정독」은 한 줄씩 따라가며 읽을 파일, 「훑기」는 무슨 일을 하는지만 알면 되는 파일입니다.</p>
+
+  <div class="read">
+    <span class="depth">1 · 정독</span>
+    <h3>src/schema/template.ts — 템플릿의 생김새</h3>
+    <p>가장 먼저 읽을 파일입니다. 이 프로젝트가 다루는 데이터의 모양이 여기 다 있습니다.</p>
+<pre><code>export type Box = { x: number; y: number; w: number; h: number };
+
+export type FrameNode = { id: string; type: 'frame'; box: Box; children: TemplateNode[] };
+export type GroupNode = { id: string; type: 'group'; box: Box; children: TemplateNode[] };
+export type TextSlot = {
+  id: string; type: 'text'; role: 'title' | 'subtitle' | 'body' | 'caption'; box: Box;
+  fontSize: number; minFontSize: number; maxLines: number;
+};
+export type ImageSlot = { id: string; type: 'image'; role: 'image'; box: Box };
+
+export type TemplateNode = FrameNode | GroupNode | TextSlot | ImageSlot;</code></pre>
+    <ul>
+      <li><strong>노드는 네 종류입니다.</strong> <code>frame</code>(포스터 전체), <code>group</code>(카드), <code>text</code>(글 칸), <code>image</code>(그림 칸). 마지막 줄의 <code>|</code>는 「이 넷 중 하나」라는 뜻입니다.</li>
+      <li><strong>frame과 group은 <code>children</code>을 가집니다.</strong> 자식으로 또 노드가 들어가므로 상자 속 상자 구조가 됩니다. 이런 구조를 트리(tree)라고 합니다. 폴더 안에 폴더가 있는 것과 같습니다.</li>
+      <li><strong>text와 image는 children이 없습니다.</strong> 트리의 맨 끝이고, 이 둘을 합쳐 슬롯이라고 부릅니다.</li>
+      <li><strong><code>type</code> 글자로 종류를 구분합니다.</strong> 코드에서 <code>if (node.type === 'text')</code>라고 쓰면 TypeScript가 그 안에서는 <code>node</code>를 TextSlot으로 알아봅니다.</li>
+    </ul>
+    <p>파일 아래쪽의 <code>…Schema</code>들은 같은 모양을 한 번 더 적은 것입니다. 위쪽 타입은 코드를 쓸 때 TypeScript가 검사하는 용도이고, 아래쪽 스키마는 프로그램이 실행될 때 JSON 파일을 실제로 검사하는 용도입니다. 타입은 실행되면 사라지기 때문에 둘 다 필요합니다. 스키마 검사는 <code>zod</code>라는 라이브러리가 맡습니다.</p>
+    <p><code>z.lazy(() =&gt; …)</code>는 자기 자신을 포함하는 모양(children 안에 또 노드)을 적을 때 쓰는 장치입니다. 「필요해질 때 가서 확인해라」라는 뜻이라고만 알아 두면 됩니다.</p>
+  </div>
+
+  <div class="read">
+    <span class="depth">2 · 정독</span>
+    <h3>src/schema/content.ts · result.ts — 넣을 것과 나오는 것</h3>
+<pre><code>export type ContentItem = {
+  id: string;
+  kind: 'text' | 'image';
+  roleHint?: Role;        // "나는 제목이에요" 같은 힌트. 없을 수도 있음
+  text?: string;          // kind가 'text'이면 반드시 있어야 함
+  groupId?: string;       // 같은 카드에 들어가야 하는 것끼리 같은 값
+  priority: 1 | 2 | 3;    // 1 = 절대 버리면 안 됨
+};</code></pre>
+    <p>물음표(<code>?</code>)가 붙은 항목은 없어도 된다는 뜻입니다. <code>c01-summer-sale.json</code>을 열어 보면 「무료배송」과 「3만원 이상…」이 같은 <code>groupId: "g1"</code>을 갖고 있습니다. 이 둘은 같은 카드에 들어가야 한다는 표시입니다.</p>
+<pre><code>export type Assignment = { slotId: string; contentId: string | null }[];
+
+export type MatchResult = {
+  assignment: Assignment;   // 모든 슬롯이 정확히 한 번 등장
+  dropped: string[];        // 자리가 없어 못 넣은 콘텐츠 id
+  totalCost: number;        // 이 배치의 '나쁨 점수' 합. Step 2부터 의미가 생김
+};</code></pre>
+    <p><code>Assignment</code>는 「슬롯 id, 콘텐츠 id」 짝의 목록입니다. 빈 슬롯은 <code>contentId</code>가 <code>null</code>입니다. 매처가 내놓는 답이 <code>MatchResult</code>, 검사와 판정까지 끝난 최종 결과가 <code>PipelineResult</code>입니다.</p>
+  </div>
+
+  <div class="read">
+    <span class="depth">3 · 정독</span>
+    <h3>src/tree/traverse.ts — 트리에서 슬롯만 뽑아 한 줄로 세우기</h3>
+<pre><code>export function collectSlots(root: TemplateNode): Slot[] {
+  if (root.type === 'text' || root.type === 'image') return [root];
+  return root.children.flatMap(collectSlots);
+}</code></pre>
+    <p>두 줄짜리 함수지만 이 프로젝트에서 처음 만나는 재귀입니다. 재귀는 함수가 자기 자신을 다시 부르는 것입니다.</p>
+    <ul>
+      <li>지금 보는 노드가 슬롯이면, 그것 하나를 담은 목록을 돌려줍니다.</li>
+      <li>슬롯이 아니면(frame이나 group이면) 자식들 각각에게 같은 질문을 하고, 받은 목록들을 이어 붙입니다. <code>flatMap</code>이 「각각에게 묻고 이어 붙이기」를 한 번에 합니다.</li>
+    </ul>
+    <p>t01 템플릿으로 따라가 보면 이렇게 됩니다.</p>
+<pre><code>root (frame)
+├─ title                    → [title]
+├─ cardA (group)
+│  ├─ cardA-sub             → [cardA-sub]
+│  └─ cardA-body            → [cardA-body]
+└─ cardB (group)
+   ├─ cardB-sub             → [cardB-sub]
+   └─ cardB-body            → [cardB-body]
+
+결과: [title, cardA-sub, cardA-body, cardB-sub, cardB-body]</code></pre>
+    <p>위에서 아래로, 안쪽을 다 본 뒤 다음 형제로 넘어가는 이 순서를 DFS(깊이 우선 탐색)라고 합니다. greedy가 슬롯을 채우는 순서가 바로 이 순서입니다.</p>
+    <p>같은 파일의 <code>slotGroupMap</code>은 「각 슬롯이 어느 카드 소속인가」를 적은 표를 만듭니다. <code>cardA-sub → cardA</code>, <code>title → null</code>(어느 카드에도 속하지 않음) 같은 식입니다. Step 3에서 카드가 찢어졌는지 볼 때 씁니다.</p>
+  </div>
+
+  <div class="read">
+    <span class="depth">4 · 훑기</span>
+    <h3>src/context.ts — 꾸러미 만들기</h3>
+    <p><code>buildContext(템플릿, 콘텐츠)</code>는 위에서 본 슬롯 목록과 소속 표, 그리고 「id로 콘텐츠 항목을 바로 찾는 표(<code>itemsById</code>)」를 묶어 <code>MatchContext</code>로 돌려줍니다. 이후의 모든 함수는 이 꾸러미 하나만 받습니다. 매처마다 트리를 다시 뒤지는 일을 막으려는 장치입니다.</p>
+  </div>
+
+  <div class="read">
+    <span class="depth">5 · 정독 · 가장 중요</span>
+    <h3>src/matchers/types.ts · greedy.ts — 첫 번째 배치 방법</h3>
+<pre><code>export type Matcher = { name: string; match(ctx: MatchContext): MatchResult };</code></pre>
+    <p>매처의 약속은 이 한 줄입니다. 이름이 있고, 꾸러미를 받아 배치를 돌려주는 <code>match</code> 함수가 있으면 매처입니다. 앞으로 만들 네 가지 방법이 모두 이 약속을 따르기 때문에, 나머지 코드는 어떤 매처가 오든 똑같이 다룰 수 있습니다. 콘센트 규격이 같으면 어떤 가전이든 꽂을 수 있는 것과 같습니다.</p>
+<pre><code>function match(ctx: MatchContext): MatchResult {
+  const used = new Set&lt;string&gt;();          // 이미 쓴 콘텐츠 id를 적어 두는 메모장
+  const assignment: Assignment = [];
+  let totalCost = 0;
+
+  for (const slot of ctx.slots) {          // 슬롯을 DFS 순서로 하나씩
+    const item = ctx.content.items.find(   // 콘텐츠를 앞에서부터 훑어
+      (i) =&gt; !used.has(i.id) &amp;&amp; i.kind === slot.type,   // 아직 안 썼고 종류가 같은 첫 번째
+    );
+    if (item === undefined) {              // 넣을 것이 없으면 빈칸으로
+      assignment.push({ slotId: slot.id, contentId: null });
+      continue;
+    }
+    used.add(item.id);
+    assignment.push({ slotId: slot.id, contentId: item.id });
+    totalCost += cost(item, slot, ctx);
+  }
+
+  const dropped = ctx.content.items.filter((i) =&gt; !used.has(i.id)).map((i) =&gt; i.id);
+  return { assignment, dropped, totalCost };
+}</code></pre>
+    <p>greedy(탐욕)는 「지금 눈앞에서 제일 먼저 보이는 것을 집는다」는 방식입니다. 줄 선 순서대로 빈자리에 앉히는 것과 같습니다. 역할도, 글 길이도, 카드 소속도 보지 않습니다.</p>
+    <p>c01 콘텐츠는 일부러 순서를 섞어 두었습니다. 한 바퀴씩 따라가 보면 왜 틀리는지 보입니다.</p>
+    <div class="scroll">
+    <table>
+      <thead><tr><th>차례</th><th>슬롯</th><th>아직 안 쓴 콘텐츠 (앞에서부터)</th><th>집은 것</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>title</td><td><strong>무료배송</strong>, 3만원 이상…, 여름 세일, 할인, 전 품목…</td><td>무료배송</td></tr>
+        <tr><td>2</td><td>cardA-sub</td><td><strong>3만원 이상…</strong>, 여름 세일, 할인, 전 품목…</td><td>3만원 이상 구매 시 전국 무료배송</td></tr>
+        <tr><td>3</td><td>cardA-body</td><td><strong>여름 세일</strong>, 할인, 전 품목…</td><td>여름 세일</td></tr>
+        <tr><td>4</td><td>cardB-sub</td><td><strong>할인</strong>, 전 품목…</td><td>할인</td></tr>
+        <tr><td>5</td><td>cardB-body</td><td><strong>전 품목…</strong></td><td>전 품목 20% 할인</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>제목이 콘텐츠 목록의 세 번째에 있었기 때문에 앞의 세 칸이 한 칸씩 밀렸습니다. 뒤의 두 칸은 우연히 순서가 맞아 정답이 됐습니다. 「입력 순서가 조금만 바뀌어도 결과가 무너진다」가 greedy의 약점이고, Step 2에서 Hungarian을 들여오는 이유입니다.</p>
+    <p><code>matchers/index.ts</code>에는 매처 네 개의 명단(<code>REGISTRY</code>)이 있습니다. 각 줄에 <code>implemented: true/false</code>가 붙어 있어서, 테스트와 bench가 아직 안 만든 매처를 건너뜁니다.</p>
+  </div>
+
+  <div class="read">
+    <span class="depth">6 · 정독</span>
+    <h3>src/text/measure.ts — 글이 몇 줄을 차지하는지 어림하기</h3>
+    <p>실제 폰트로 글자 폭을 재려면 브라우저가 필요합니다. 이 프로젝트는 배치 방법을 비교하는 것이 목적이라, 글자 종류별 폭을 정해 두고 계산으로 어림합니다.</p>
+    <div class="scroll">
+    <table>
+      <thead><tr><th>글자</th><th>폭</th></tr></thead>
+      <tbody>
+        <tr><td>한글</td><td>글자 크기 × 1.0</td></tr>
+        <tr><td>영문·숫자·문장부호</td><td>글자 크기 × 0.55</td></tr>
+        <tr><td>공백</td><td>글자 크기 × 0.3</td></tr>
+        <tr><td>줄 높이</td><td>글자 크기 × 1.4</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>빨간 칸이 왜 빨간지 손으로 계산해 봅니다. cardA-sub 칸은 폭 218, 글자 크기 20, 최대 1줄입니다.</p>
+<pre><code>"3만원 이상 구매 시 전국 무료배송"
+
+한글 13자   13 × 1.0  = 13.00
+숫자 1자     1 × 0.55 =  0.55
+공백 5칸     5 × 0.3  =  1.50
+                 합계 = 15.05 (글자 크기의 15.05배)
+
+실제 폭   15.05 × 20px = 301px
+줄 수     301 ÷ 218 = 1.38…  → 올림해서 2줄
+허용      1줄                → 넘침</code></pre>
+    <p>코드에서는 <code>measureLines</code>가 줄 수를 구하고, <code>fits</code>가 「줄 수가 허용 이내이고, 줄 수 × 줄 높이가 칸 높이 이내인가」를 참/거짓으로 답합니다. 같은 방법으로 title 칸의 「무료배송」을 재면 4 × 32 = 128px로 폭 520에 여유 있게 들어갑니다. 그래서 초록입니다.</p>
+    <p>숫자 1.0, 0.55 같은 값은 이 파일에 직접 쓰지 않고 <code>scoring/weights.ts</code>에서 가져옵니다. 조절할 수 있는 숫자를 한 파일에 모아 두면 나중에 「이 값을 바꾸면 결과가 어떻게 달라지나」를 실험하기 쉽습니다.</p>
+  </div>
+
+  <div class="read">
+    <span class="depth">7 · 정독</span>
+    <h3>src/validation/ — 규칙으로 검사하기</h3>
+<pre><code>export type Rule = {
+  id: string;
+  severity: 'error' | 'warn';
+  check(ctx, r, adj): Violation[];   // 위반을 찾아 목록으로 돌려줌. 없으면 빈 목록
+};</code></pre>
+    <p>규칙도 매처처럼 약속이 하나입니다. <code>validate.ts</code>는 규칙 다섯 개를 차례로 돌려 위반을 모으는 일만 합니다.</p>
+    <p><code>rules/overflow.ts</code>가 지금 유일하게 일하는 규칙입니다. 배치를 한 줄씩 보면서 다음을 합니다.</p>
+    <ol>
+      <li>빈 슬롯이면 건너뜁니다.</li>
+      <li>글 칸에 글이 들어간 경우만 봅니다.</li>
+      <li><code>fits()</code>에게 물어봅니다. 들어가면 통과입니다.</li>
+      <li>안 들어가면 「줄 수 2/1, 높이 56/40」 같은 설명을 붙여 error 위반을 하나 만듭니다.</li>
+    </ol>
+    <p>3번에서 글자 크기는 <code>adj.fontSize[slot.id] ?? slot.fontSize</code>로 정합니다. 「조정된 크기가 있으면 그것을, 없으면 원래 크기를」이라는 뜻입니다. Step 4에서 글자 크기를 줄이는 대응이 생기면 이 줄 덕분에 줄어든 크기로 다시 검사하게 됩니다.</p>
+    <p>나머지 네 파일(<code>titleMissing</code>, <code>priorityDropped</code>, <code>groupSplit</code>, <code>roleMismatch</code>)은 항상 빈 목록을 돌려줍니다. 열어 보면 무엇을 검사할 예정인지 주석 한 줄이 있습니다.</p>
+  </div>
+
+  <div class="read">
+    <span class="depth">8 · 정독</span>
+    <h3>src/pipeline.ts — 전체를 잇는 함수 run()</h3>
+<pre><code>export function run(t: Template, c: Content, matcher: Matcher): PipelineResult {
+  const ctx = buildContext(t, c);                 // 꾸러미 만들기
+  let r = matcher.match(ctx);                     // 배치
+  let adj = { fontSize: {} };                     // 아직 조정한 것 없음
+  let violations = validate(ctx, r, adj);         // 검사
+
+  for (let i = 1; i &lt;= MAX_ITERATIONS &amp;&amp; violations.length &gt; 0; i++) {
+    const step = POLICY.find((s) =&gt; s.applies(violations));  // 쓸 수 있는 대응 찾기
+    if (step === undefined) break;                // 없으면 그만
+    const next = step.apply(ctx, r, adj);         // 대응 적용
+    r = next.r; adj = next.adj;
+    violations = validate(ctx, r, adj);           // 다시 검사
+  }
+
+  return { status: decideStatus(violations), /* … */ };
+}</code></pre>
+    <p>(읽기 쉽게 기록용 줄을 뺀 모양입니다.) 가운데 <code>for</code> 반복이 「위반이 있으면 고쳐 보고 다시 검사」하는 자리입니다. 대응 목록인 <code>POLICY</code>가 지금은 비어 있어서 첫 바퀴에서 바로 빠져나옵니다. 병원에 비유하면 검사 → 처방 → 재검사를 최대 다섯 번 되풀이하는 구조인데, 아직 처방전이 한 장도 없는 상태입니다.</p>
+<pre><code>function decideStatus(violations: Violation[]): Status {
+  if (violations.some((v) =&gt; v.severity === 'error')) return 'rejected';
+  if (violations.some((v) =&gt; v.severity === 'warn')) return 'degraded';
+  return 'accepted';
+}</code></pre>
+    <p>판정은 세 줄입니다. error가 하나라도 있으면 거절, warn만 있으면 「쓸 수는 있지만 흠이 있음」, 아무것도 없으면 합격입니다. 이 기준은 초안이고 Step 4에서 직접 확정하시게 됩니다.</p>
+    <p>결과의 <code>trace</code>에는 무슨 일이 있었는지가 순서대로 적힙니다. 이번 실행에서는 「match(greedy)… → validate: error 1, warn 0 → fallback: 적용할 단계 없음」 세 줄입니다.</p>
+  </div>
+
+  <div class="read">
+    <span class="depth">9 · 훑기</span>
+    <h3>나머지 파일</h3>
+    <div class="scroll">
+    <table>
+      <thead><tr><th>파일</th><th>하는 일</th></tr></thead>
+      <tbody>
+        <tr><td><code>src/io/loader.ts</code></td><td>fixtures 폴더의 JSON을 읽고 스키마로 검사합니다. 파일을 읽는 코드는 여기와 scripts, bench에만 있습니다.</td></tr>
+        <tr><td><code>src/scoring/weights.ts</code></td><td>조절할 수 있는 모든 숫자를 모아 둔 곳입니다.</td></tr>
+        <tr><td><code>src/scoring/cost.ts</code></td><td>「이 콘텐츠를 이 슬롯에 넣으면 얼마나 나쁜가」를 점수로 돌려줄 자리입니다. 지금은 글↔그림처럼 종류가 다르면 무한대, 같으면 0만 돌려줍니다. Step 2의 핵심 파일이 됩니다.</td></tr>
+        <tr><td><code>src/render/svg.ts</code></td><td>결과를 SVG 글자로 조립합니다. 상자 하나가 <code>&lt;rect&gt;</code> 한 줄, 글 한 줄이 <code>&lt;text&gt;</code> 한 줄입니다.</td></tr>
+        <tr><td><code>scripts/render.ts</code></td><td>명령줄에서 템플릿·콘텐츠·매처 이름을 받아 그림 파일을 저장합니다.</td></tr>
+        <tr><td><code>bench/evaluate.ts</code></td><td>모든 템플릿 × 콘텐츠 × 매처 조합을 돌려 비교표를 만듭니다.</td></tr>
+        <tr><td><code>src/fallback/</code></td><td>대응 단계의 약속(<code>FallbackStep</code>)과 빈 목록 <code>POLICY</code>만 있습니다.</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="note"><strong>순수 함수라는 말.</strong> 매처, 검사, 판정 코드는 모두 「받은 것만 보고 계산해서 돌려주는」 함수입니다. 파일을 읽거나 받은 값을 고치지 않습니다. 같은 입력에는 항상 같은 답이 나오므로 테스트하기 쉽고, 매처끼리 비교할 때 서로 영향을 주지 않습니다.</div>
+  </div>
+</section>
+
+<section id="tests">
+  <h2>테스트가 지키는 것</h2>
+  <p>테스트 파일은 세 개이고 성격이 다릅니다.</p>
+  <h3>tests/smoke.test.ts — 일단 돌아가는가</h3>
+  <p>t01 × c01 × greedy를 한 번 돌려서 결과가 제대로 된 모양인지 봅니다. 그리고 「제목 칸에 무료배송이 들어간다」를 확인합니다. 틀린 결과를 일부러 고정해 둔 테스트입니다. 나중에 누가 greedy를 슬쩍 똑똑하게 고치면 이 테스트가 깨져서, 비교의 출발점이 바뀐 것을 알 수 있습니다.</p>
+  <h3>tests/schema.test.ts — 입력 검사가 일하는가</h3>
+  <p>모든 fixture 파일이 스키마를 통과하는지, 그리고 글 항목인데 <code>text</code>가 빠진 잘못된 입력을 실제로 막는지 봅니다.</p>
+  <h3>tests/invariants.test.ts — 어떤 입력에서도 깨지면 안 되는 약속</h3>
+  <p>배치가 좋은지 나쁜지와 상관없이, 배치라면 반드시 지켜야 하는 네 가지입니다. 데이터베이스의 제약조건과 같은 성격입니다.</p>
+  <ol>
+    <li>모든 슬롯이 배치표에 정확히 한 번 나온다.</li>
+    <li>한 콘텐츠가 두 칸에 동시에 들어가지 않는다.</li>
+    <li>글 칸에는 글만, 그림 칸에는 그림만 들어간다.</li>
+    <li>배치된 것과 버려진 것을 합치면 전체 콘텐츠와 같다. 사라진 것도, 두 번 센 것도 없다.</li>
+  </ol>
+  <p>이 검사는 fixture 네 쌍에 더해, <code>fast-check</code>가 무작위로 만든 템플릿과 콘텐츠 수백 개로도 돌립니다. 무작위 입력을 만드는 설계도가 <code>tests/arbitraries.ts</code>입니다. 사람이 떠올리지 못한 이상한 입력(슬롯 0개, 콘텐츠 0개, 그림만 있는 경우 등)을 대신 넣어 보는 장치입니다.</p>
+  <p>greedy의 네 가지는 모두 통과합니다. 아직 안 만든 매처 세 개는 4 × 3 = 12개가 건너뜀으로 표시됩니다. Step 2, 3에서 매처를 채우고 명단의 <code>implemented</code>를 <code>true</code>로 바꾸면 같은 검사가 자동으로 붙습니다.</p>
+  <div class="note"><strong>invariant와 validation 규칙의 차이.</strong> invariant는 코드에 버그가 없다면 절대 깨지지 않는 약속이고, 깨지면 프로그램을 고쳐야 합니다. validation 규칙은 입력에 따라 깨질 수 있는 품질 기준이고, 깨지면 결과물을 고치거나 거절합니다. 예상 질문 목록에도 있는 구분입니다.</div>
+</section>
+
+<section id="bench">
+  <h2>bench 표 읽기</h2>
+  <p><code>pnpm bench</code>는 템플릿 2개 × 콘텐츠 2개 = 4쌍을 매처마다 돌려 한 줄로 요약합니다.</p>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>matcher</th><th>goldenMatch</th><th>errors</th><th>warns</th><th>p1Dropped</th><th>groupSplit</th><th>status (합격/흠/거절)</th><th>ms</th></tr></thead>
+    <tbody>
+      <tr><td>greedy</td><td>0.40</td><td>3</td><td>0</td><td>0</td><td>-</td><td>2/0/2</td><td>0.126</td></tr>
+      <tr><td>bruteForce</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+      <tr><td>hungarian</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+      <tr><td>hierarchical</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <ul>
+    <li><strong>goldenMatch 0.40</strong> — 사람이 적어 둔 정답(golden)과 같은 칸의 비율입니다. 정답 파일이 있는 쌍은 t01 × c01 하나이고, 다섯 칸 중 두 칸이 맞았습니다.</li>
+    <li><strong>errors 3</strong> — 네 쌍에서 나온 error의 합입니다. t01 × c01에서 1건, t01 × c02에서 2건입니다. 뒤의 2건은 카페 안내의 긴 본문이 한 줄짜리 소제목 칸 두 곳에 들어가서 생깁니다.</li>
+    <li><strong>p1Dropped 0</strong> — 「절대 버리면 안 되는」 priority 1 콘텐츠가 버려진 횟수입니다.</li>
+    <li><strong>groupSplit "-"</strong> — 카드가 찢어진 횟수입니다. 세는 규칙을 Step 3에서 만들기 때문에 지금은 0으로 적지 않고 "-"로 둡니다. 0이라고 적으면 「찢어진 곳이 없다」로 읽히기 때문입니다.</li>
+    <li><strong>status 2/0/2</strong> — 합격 2쌍, 흠 있음 0쌍, 거절 2쌍입니다.</li>
+  </ul>
+  <div class="note"><strong>합격 2쌍을 믿으면 안 됩니다.</strong> t02 × c01은 합격으로 나오지만, 제목 칸에 「무료배송」이 들어가 있고 진짜 제목 「여름 세일」은 본문 칸에 있습니다. 넘치는 칸이 없었을 뿐입니다. 규칙이 하나뿐인 지금의 합격은 「글자가 안 넘쳤다」는 뜻으로만 읽어야 합니다.</div>
+</section>
+
+<section id="todo">
+  <h2>아직 비어 있는 자리</h2>
+  <p>모든 빈자리에는 <code>// TODO(Step N): …</code> 주석이 있습니다. 채워지는 순서는 이렇습니다.</p>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Step</th><th>채울 곳</th><th>무엇이 달라지나</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>fixtures 확장(템플릿 8, 콘텐츠 8), golden 5쌍</td><td>실패 사례가 다양해져 비교할 재료가 생깁니다.</td></tr>
+      <tr><td>2</td><td><code>cost.ts</code>, <code>weights.ts</code>, <code>bruteForce.ts</code>, <code>hungarian.ts</code></td><td>「나쁨 점수」가 생기고, 점수 합이 가장 작은 배치를 찾습니다.</td></tr>
+      <tr><td>3</td><td><code>hierarchical.ts</code>, <code>rules/groupSplit.ts</code></td><td>카드 단위로 먼저 짝지어 카드가 찢어지는 문제를 막습니다.</td></tr>
+      <tr><td>4</td><td>나머지 규칙 세 개, <code>fallback/steps/</code>, <code>policy.ts</code></td><td>역할 틀림·제목 누락을 잡고, 글자 줄이기 같은 대응이 생깁니다.</td></tr>
+      <tr><td>5</td><td><code>README.md</code></td><td>전체 이야기를 수치와 함께 정리합니다.</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section id="try">
+  <h2>직접 돌려 보기</h2>
+  <p>저장소 폴더에서 아래 명령을 차례로 쳐 보면 이 문서의 내용을 눈으로 확인할 수 있습니다.</p>
+<pre><code>pnpm install
+pnpm test
+pnpm render t01-sale-cards c01-summer-sale greedy
+open out/t01-sale-cards__c01-summer-sale__greedy.svg
+pnpm bench</code></pre>
+  <p>손을 대 보면 이해가 빨라지는 실험 세 가지입니다. 끝나면 <code>git checkout .</code>으로 되돌리면 됩니다.</p>
+  <ul>
+    <li><strong>콘텐츠 순서 바꾸기.</strong> <code>fixtures/contents/c01-summer-sale.json</code>에서 <code>title</code> 항목을 맨 위로 올리고 다시 render 합니다. 다섯 칸이 전부 정답이 되고 판정이 accepted로 바뀝니다. greedy가 입력 순서에만 의존한다는 것이 보입니다. (이때 smoke 테스트는 깨집니다. 고정해 둔 실패가 사라졌기 때문입니다.)</li>
+    <li><strong>칸 넓히기.</strong> <code>t01-sale-cards.json</code>에서 cardA-sub의 <code>maxLines</code>를 2로, 높이 <code>h</code>를 60으로 바꿉니다. 빨간 칸이 초록이 됩니다.</li>
+    <li><strong>글자 폭 바꾸기.</strong> <code>src/scoring/weights.ts</code>의 한글 폭 1.0을 0.7로 바꿉니다. 301px이던 글이 약 223px이 되어도 218을 넘으므로 여전히 넘칩니다. 0.65로 낮추면 통과합니다. 어림값 하나가 판정을 바꾼다는 것을 알 수 있습니다.</li>
+  </ul>
+</section>
+
+<section id="decided">
+  <h2>Claude가 정한 것</h2>
+  <p>기획서에 정해져 있지 않아 구현하면서 정한 기술적인 선택입니다. 기획서 부록 B에 D-2 ~ D-5로 적어 두었고, 마음에 들지 않으면 바꿀 수 있습니다.</p>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>ID</th><th>정한 것</th><th>이유</th><th>버린 대안</th></tr></thead>
+    <tbody>
+      <tr><td>D-2</td><td><code>@types/node</code>를 여섯 번째 의존성으로 추가</td><td>파일 읽기 코드가 타입 검사를 통과하려면 필요합니다. 타입 정보만 담긴 패키지입니다.</td><td>필요한 타입을 직접 적기 — 유지할 코드만 늘어납니다.</td></tr>
+      <tr><td>D-3</td><td>줄 수 = 글 전체 폭 ÷ 칸 폭을 올림</td><td>손으로 검산할 수 있습니다.</td><td>단어 단위 줄바꿈 — 실제에 더 가깝지만 설명하기 어렵습니다.</td></tr>
+      <tr><td>D-4</td><td>안 만든 매처는 명단의 <code>implemented</code> 표시로 구분</td><td>매처의 약속을 건드리지 않습니다.</td><td>실행해 보고 오류가 나면 건너뛰기 — 진짜 버그까지 조용히 건너뜁니다.</td></tr>
+      <tr><td>D-5</td><td>입력 파일 검사를 기획서보다 엄격하게</td><td>모르는 항목, 중복 id, 0 이하 크기를 읽는 순간 막습니다.</td><td>느슨한 검사 — fixture 오타가 엉뚱한 결과로 나타납니다.</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section id="choose">
+  <h2>사용자가 고른 네 가지</h2>
+  <p>기획서 Step 0의 「결정 필요」 항목입니다. 2026-10-05에 정했고 기획서 부록 B에 D-6 ~ D-9로 적혀 있습니다. Step 1부터 반영됩니다.</p>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>ID</th><th>물음</th><th>고른 것</th><th>버린 쪽과 치르는 것</th></tr></thead>
+    <tbody>
+      <tr><td>D-6</td><td>이미지를 실제로 다룰지</td><td>fixture에 이미지 슬롯과 이미지 콘텐츠를 넣는다. 학습용이기도 해서 다양한 상황을 담는다.</td><td>글만 다루기. 비율 맞춤 같은 이미지 고유 규칙은 여전히 없습니다.</td></tr>
+      <tr><td>D-7</td><td>정답(golden)과 비교하는 방식</td><td>모양이 같은 카드끼리 통째로 자리를 바꾼 배치도 정답으로 센다.</td><td>칸마다 정확 일치. 비교 코드가 조금 복잡해집니다.</td></tr>
+      <tr><td>D-8</td><td>역할 힌트(roleHint)가 없는 콘텐츠</td><td>역할 미상으로 두고 길이·순서 점수로만 자리를 찾게 한다.</td><td>글 길이로 역할 추정. 힌트 없는 콘텐츠의 배치 품질이 떨어질 수 있습니다.</td></tr>
+      <tr><td>D-9</td><td>「흠 있음(degraded)」의 기준</td><td>error 없이 warn이 하나라도 있으면 degraded. Step 4에서 다시 확정한다.</td><td>warn 개수 임계값. warn 1건과 5건이 같은 등급이 됩니다.</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section id="interview">
+  <h2>꼭 읽을 함수와 예상 질문</h2>
+  <h3>읽을 함수 세 개 (이 순서로)</h3>
+  <ol>
+    <li><code>run()</code> — <code>src/pipeline.ts</code>. 전체 흐름이 스무 줄 남짓에 다 들어 있습니다.</li>
+    <li><code>match()</code> — <code>src/matchers/greedy.ts</code>. 위의 다섯 차례 표를 옆에 두고 한 줄씩 따라가 봅니다.</li>
+    <li><code>measureLines()</code>와 <code>fits()</code> — <code>src/text/measure.ts</code>. 301px 계산을 손으로 다시 해 봅니다.</li>
+  </ol>
+  <h3>예상 질문</h3>
+  <p><strong>「greedy가 왜 부족했나요? 구체적인 실패 사례가 있나요?」</strong></p>
+  <p>답의 뼈대: greedy는 슬롯 순서와 입력 순서만 보고 역할·길이·카드 소속을 보지 않습니다. 제목이 세 번째로 들어온 콘텐츠에서 제목 칸에 소제목 「무료배송」이 들어갔고, 한 줄짜리 소제목 칸에 301px짜리 본문이 들어가 넘쳤습니다. 다섯 칸 중 두 칸만 정답이었습니다(goldenMatch 0.40). 콘텐츠 순서만 바꾸면 다섯 칸이 다 맞으므로, 결과가 입력 순서에 좌우된다는 점이 근본 문제입니다.</p>
+</section>
+</main>
