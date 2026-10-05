@@ -573,8 +573,9 @@ README 구성:
 
 ## 부록 C. 진행 상황
 
-- 현재 Step: 4 완료 (2026-10-05)
-- 마지막 작업: 규칙 3개(titleMissing·priorityDropped·roleMismatch), fallback 2단계, status 판정(D-20~D-23), 거절 fixture c10·c11. `pnpm test` 통과 40 / skip 0, typecheck 0
-- bench(99쌍, golden 5, fallback 이후): greedy 0.43 · 9/56/34, hungarian 0.75 · groupSplit 6 · 39/40/20, hierarchical 0.89 · groupSplit 0 · 43/38/18. hierarchical rejected 18쌍 = c10 9쌍(p1 유실) + c11 6쌍(줄여도 넘침) + t09 3쌍(F-7)
-- 브랜치 메모: 이 저장소의 클라우드 세션은 지정 브랜치 하나에만 푸시할 수 있어, Step마다 로컬 `step-N-*` 브랜치를 `--no-ff`로 세션 브랜치에 합쳐 Step 경계를 남긴다. `main` 병합은 사용자가 한다
-- 다음 할 일: Step 5 (README, 코드 읽기 가이드). 🙋 설명 리허설은 사용자 몫
+- 현재 Step: 5 완료 (2026-10-05). 🙋 설명 리허설(5장 질문에 소리 내어 답하기)만 사용자 몫으로 남음
+- 마지막 작업: README(문제·모델링·실패 분류·진화·판정 기준·수치·한계·다음·AI 활용), 코드 읽기 가이드 아티팩트(Step 0~4 전체)
+- 최종 bench(99쌍, golden 5): greedy 0.43 · 9/56/34, hungarian 0.75 · groupSplit 6 · 39/40/20, hierarchical 0.89 · groupSplit 0 · 43/38/18. `pnpm test` 통과 40, typecheck 0
+- 위임 결정: 이번 세션에서 사용자가 🙋 판단을 Claude에게 위임했다. 부록 A의 분류와 D-10·D-13·D-14·D-19~D-22는 「Claude 결정 — 🙋 사용자 위임」이다. 사용자가 바꾸면 해당 줄과 README를 함께 고친다
+- 브랜치 메모: 이 저장소의 클라우드 세션은 지정 브랜치 하나에만 푸시할 수 있어, Step마다 로컬 `step-N-*` 브랜치를 `--no-ff`로 세션 브랜치 `claude/lucid-bell-n2rc8s`에 합쳐 Step 경계를 남겼다. `main` 병합(PR)은 사용자가 한다
+- 다음 할 일: 사용자가 위임 결정을 검토, `main`으로 병합, 설명 리허설. 남은 개선 거리는 F-8·F-9
