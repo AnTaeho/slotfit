@@ -3,11 +3,14 @@
 이 문서는 Step 0 이후를 이어서 개발하는 세션(클라우드 세션 포함)이 읽는다.
 규칙은 `CLAUDE.md`, 명세는 `spec.md`에 있다. 이 문서는 그 둘에 없는 것만 적는다.
 
-## 지금 상태 (2026-10-05)
-- Step 0 완료, `main`에 있다. `pnpm test` 통과 8 / skip 12, `pnpm typecheck` 오류 0.
-- `pnpm render t01-sale-cards c01-summer-sale greedy` → status `rejected`(cardA-sub overflow 1건).
-- `pnpm bench` → greedy: goldenMatch 0.40, errors 3, status 2/0/2. 나머지 matcher는 "-".
-- Step 0의 「결정 필요」 4건은 사용자가 정했다. `spec.md` 부록 B의 D-6 ~ D-9.
+## 지금 상태 (2026-10-05, Step 0~5 완료)
+- Step 1~5를 한 세션에서 끝냈다. 세션 브랜치 `claude/lucid-bell-n2rc8s`에 Step마다 `--no-ff` merge commit으로 합쳐 두었다(클라우드 세션은 지정 브랜치에만 푸시할 수 있어서). `main` 병합은 아직이다.
+- 사용자가 「판단이 필요하면 알아서 정하고 기록하라」고 위임해서, 🙋 항목(golden, 실패 분류, cost 가중치, 계층 매칭 채택 이유, severity, fallback 순서, status 경계)을 Claude가 정했다. `spec.md` 부록 B에 「Claude 결정 — 🙋 사용자 위임」으로 표시돼 있다.
+- `pnpm test` 40 통과, `pnpm typecheck` 0, 최종 bench는 `spec.md` 부록 C와 README 6장.
+- 코드 읽기 가이드: `docs/guide/slotfit-guide.html` (아티팩트로 게시됨). Step 0 초안 `step0-draft.html`은 기록으로 남겨 둔다.
+- 다음 할 일: 사용자의 위임 결정 검토 → 바뀌면 `weights.ts`·`policy.ts`·부록 B·README 갱신, `main` 병합, 설명 리허설. 남은 개선 거리 F-8·F-9.
+
+## (이하 Step 0 직후에 쓴 원래 지시. 기록으로 남김)
 
 ## 할 일
 Step 1부터 순서대로, 갈 수 있는 데까지 간다. 한 Step = 브랜치 하나 = PR 하나.
