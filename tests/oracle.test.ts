@@ -1,24 +1,15 @@
 // oracle: 작은 입력에서 hungarian이 전수 탐색(bruteForce)과 같은 최소 totalCost를 내는지 확인한다.
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
+import { permutations } from '../bench/golden';
 import { buildContext } from '../src/context';
-import { loadAllContents, loadAllTemplates } from '../src/io/loader';
 import { bruteForce, bruteForceFits } from '../src/matchers/bruteForce';
 import { hungarian, solveAssignment } from '../src/matchers/hungarian';
 import { DROP_COST_BY_PRIORITY, EMPTY_COST_BY_ROLE, FORBIDDEN_COST } from '../src/scoring/weights';
 import { smallContentArb, smallTemplateArb } from './arbitraries';
+import { allFixtureContexts } from './fixtureContexts';
 
 const DIGITS = 6; // totalCost 비교 소수 자릿수(합하는 순서가 달라 생기는 부동소수 오차만 허용)
-
-// 0..n-1의 모든 순열. 작은 n(≤ 7)에서만 쓴다.
-function permutations(n: number): number[][] {
-  if (n === 0) return [[]];
-  const out: number[][] = [];
-  for (const rest of permutations(n - 1)) {
-    for (let k = 0; k <= rest.length; k++) out.push([...rest.slice(0, k), n - 1, ...rest.slice(k)]);
-  }
-  return out;
-}
 
 const sumOf = (matrix: number[][], rowToCol: number[]): number =>
   rowToCol.reduce((sum, col, row) => sum + (matrix[row]?.[col] ?? Number.NaN), 0);
@@ -34,9 +25,7 @@ describe('oracle: hungarian = bruteForce', () => {
   });
 
   it('상한 이내인 fixture 쌍 전부에서 totalCost가 같다', () => {
-    const contexts = loadAllTemplates()
-      .flatMap((t) => loadAllContents().map((c) => buildContext(t, c)))
-      .filter(bruteForceFits);
+    const contexts = allFixtureContexts().filter(bruteForceFits);
     expect(contexts.length).toBeGreaterThan(0);
     for (const ctx of contexts) {
       expect(hungarian.match(ctx).totalCost, `${ctx.template.id} × ${ctx.content.id}`).toBeCloseTo(
@@ -48,7 +37,7 @@ describe('oracle: hungarian = bruteForce', () => {
 });
 
 describe('oracle: solveAssignment', () => {
-  it('빈 행렬은 빈 배정', () => {
+  it('빈 행렬이면 빈 배정을 돌려준다', () => {
     expect(solveAssignment([])).toEqual([]);
   });
 

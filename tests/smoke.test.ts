@@ -7,12 +7,12 @@ import { run } from '../src/pipeline';
 describe('smoke: t01-sale-cards × c01-summer-sale × greedy', () => {
   const result = run(loadTemplate('t01-sale-cards'), loadContent('c01-summer-sale'), greedy);
 
-  it('PipelineResult를 반환한다', () => {
+  it('PipelineResult의 모든 필드를 채워 돌려준다', () => {
     expect(result.matcher).toBe('greedy');
     expect(['accepted', 'degraded', 'rejected']).toContain(result.status);
     expect(result.assignment).toHaveLength(5);
     expect(Array.isArray(result.dropped)).toBe(true);
-    // fallback(shrinkFont)이 글자 크기를 줄일 수 있어 내용은 고정하지 않는다(Step 4).
+    // fallback(shrinkFont)이 글자 크기를 줄일 수 있어 내용은 고정하지 않는다(D-21).
     expect(typeof result.adjustments.fontSize).toBe('object');
     expect(Array.isArray(result.violations)).toBe(true);
     expect(result.trace.length).toBeGreaterThan(0);
