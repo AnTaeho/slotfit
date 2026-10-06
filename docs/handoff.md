@@ -6,10 +6,10 @@
 ## 지금 상태 (2026-10-05, Step 0~5 완료)
 - Step 1~5를 한 세션에서 끝냈다. 세션 브랜치 `claude/lucid-bell-n2rc8s`에 Step마다 `--no-ff` merge commit으로 합쳐 두었다(클라우드 세션은 지정 브랜치에만 푸시할 수 있어서). `main` 병합은 아직이다.
 - 사용자가 「판단이 필요하면 알아서 정하고 기록하라」고 위임해서, 🙋 항목(golden, 실패 분류, cost 가중치, 계층 매칭 채택 이유, severity, fallback 순서, status 경계)을 Claude가 정했다. `spec.md` 부록 B에 「Claude 결정 — 🙋 사용자 위임」으로 표시돼 있다.
-- `pnpm test` 40 통과, `pnpm typecheck` 0, 최종 bench는 `spec.md` 부록 C와 README 6장.
+- `pnpm test` 85 통과, `pnpm typecheck` 0, 최종 bench는 `spec.md` 부록 C와 README 6장. Step 1~5와 다듬기(`step-6-polish`)는 `main`에 합쳐져 있다.
 - 코드 읽기 가이드: `docs/guide/slotfit-guide.html` (아티팩트로 게시됨).
 - 마지막에 구조도(README·가이드)와 동작 불변 가독성 리팩터링(D-24)을 더했다. 가이드의 Step 0 장 코드 인용은 리팩터링 전 모양이다.
-- 다음 할 일: 사용자의 위임 결정 검토 → 바뀌면 `weights.ts`·`policy.ts`·부록 B·README 갱신, `main` 병합, 설명 리허설. 남은 개선 거리 F-8·F-9.
+- 다음 할 일: `spec.md` 부록 C의 「다음 할 일」을 따른다. 위임 결정이 바뀌면 `weights.ts`·`policy.ts`·부록 B·README·가이드를 함께 갱신한다.
 
 ## (이하 Step 0 직후에 쓴 원래 지시. 기록으로 남김)
 

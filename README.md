@@ -6,7 +6,7 @@
 
 ```
 pnpm install
-pnpm test                                   # invariant·oracle·pipeline 테스트
+pnpm test                                   # 단위·invariant·oracle·pipeline 테스트
 pnpm bench                                  # 모든 템플릿 × 콘텐츠 × matcher → bench/results/*.md
 pnpm bench:sweep                            # 가중치를 하나씩 절반·두 배로 바꿔 비교 → bench/results/sweep-*.md
 pnpm render t04-product-cards-3 c05-product-launch hierarchical   # → out/*.svg
