@@ -12,10 +12,14 @@ import type { GoldenScore } from './golden';
 
 const RESULTS_DIR = fileURLToPath(new URL('./results/', import.meta.url));
 const NONE = '-';
+// 실행 시간 측정: 쌍마다 워밍업 뒤 여러 번 재고 중앙값을 쓴다. 한 번 잰 값은 JIT·GC에 따라 실행마다 흔들린다.
+// 엔진 가중치가 아니라 bench의 측정 설정이라 weights.ts가 아닌 여기에 둔다.
+const TIMING_WARMUP_RUNS = 1; // 재기 전에 버리는 실행 횟수
+const TIMING_RUNS = 21; // 재는 횟수. 홀수라 중앙값이 가운데 값 하나로 정해진다
 const SUMMARY_COLUMNS = ['matcher', 'goldenMatch', 'errors', 'warns', 'p1Dropped', 'groupSplit', 'status (acc/deg/rej)', 'ms'];
 
 type Pair = { key: string; template: Template; content: Content; golden: Golden | undefined };
-// 쌍 하나를 matcher 하나로 실행한 결과. golden이 없는 쌍이면 goldenScore는 undefined.
+// 쌍 하나를 matcher 하나로 실행한 결과. ms는 여러 번 잰 중앙값. golden이 없는 쌍이면 goldenScore는 undefined.
 type PairRun = { pair: Pair; result: PipelineResult; ms: number; goldenScore: GoldenScore | undefined };
 // matcher 하나가 모든 쌍을 돈 결과. 실행하지 않는 matcher(D-4, D-17)는 runs가 null.
 type MatcherRuns = { entry: RegistryEntry; runs: PairRun[] | null };
@@ -39,10 +43,32 @@ function buildPairs(templates: Template[], contents: Content[]): Pair[] {
   );
 }
 
+// 정렬한 값의 가운데 값. 개수가 짝수면 가운데 두 값의 평균.
+function median(values: number[]): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  const upper = sorted[mid];
+  if (upper === undefined) throw new Error('median: 값이 없다');
+  if (sorted.length % 2 === 1) return upper;
+  return ((sorted[mid - 1] ?? upper) + upper) / 2;
+}
+
+// 쌍 하나의 실행 시간(ms): 워밍업 TIMING_WARMUP_RUNS회 뒤 TIMING_RUNS회 잰 값의 중앙값.
+// run은 순수 함수라 몇 번을 돌려도 결과가 같다. 시간만 달라진다.
+function medianRunMs(entry: RegistryEntry, pair: Pair): number {
+  for (let i = 0; i < TIMING_WARMUP_RUNS; i++) run(pair.template, pair.content, entry.matcher);
+  const samples: number[] = [];
+  for (let i = 0; i < TIMING_RUNS; i++) {
+    const started = performance.now();
+    run(pair.template, pair.content, entry.matcher);
+    samples.push(performance.now() - started);
+  }
+  return median(samples);
+}
+
 function runPair(entry: RegistryEntry, pair: Pair): PairRun {
-  const started = performance.now();
   const result = run(pair.template, pair.content, entry.matcher);
-  const ms = performance.now() - started;
+  const ms = medianRunMs(entry, pair);
   // D-7: 모양이 같은 카드끼리 통째로 바꾼 배치도 정답으로 센다(bench/golden.ts).
   const goldenScore =
     pair.golden === undefined ? undefined : scoreGolden(pair.template, pair.golden.assignment, result.assignment);
@@ -133,7 +159,7 @@ function buildReport(name: string, templates: Template[], contents: Content[], p
     '- goldenMatch: golden이 있는 쌍에서 정답과 일치하는 슬롯 비율. 모양이 같은 카드끼리 통째로 바꾼 배치도 정답(D-7)',
     '- errors / warns / p1Dropped / groupSplit: 전체 쌍의 합. 미구현 지표는 "-"',
     '- status는 fallback(shrinkFont → dropLowPriority) 이후 기준(D-22). dropped에는 fallback이 버린 항목도 들어간다',
-    '- ms: 쌍 하나를 한 번 실행한 시간의 평균',
+    `- ms: 쌍마다 워밍업 ${TIMING_WARMUP_RUNS}회 뒤 ${TIMING_RUNS}회 실행한 시간의 중앙값을 구하고, 그 중앙값들의 평균`,
     '- bruteForce는 oracle 전용(tests/oracle.test.ts에서만 실행)이라 "-"로 둔다(D-17)',
     '',
     toTable(SUMMARY_COLUMNS, all.map(summaryRow)),
