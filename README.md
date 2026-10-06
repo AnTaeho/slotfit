@@ -8,6 +8,7 @@
 pnpm install
 pnpm test                                   # invariant·oracle·pipeline 테스트
 pnpm bench                                  # 모든 템플릿 × 콘텐츠 × matcher → bench/results/*.md
+pnpm bench:sweep                            # 가중치를 하나씩 절반·두 배로 바꿔 비교 → bench/results/sweep-*.md
 pnpm render t04-product-cards-3 c05-product-launch hierarchical   # → out/*.svg
 pnpm render:all                             # 모든 쌍의 SVG
 ```
@@ -82,6 +83,23 @@ greedy(슬롯을 DFS 순서로 돌며 같은 kind의 첫 항목을 넣는 방식
 | **Hungarian** (Step 2) | F-1 대부분(t01×c01 golden 2/5 → 5/5), F-2 일부 | **F-3 카드 섞임**: t04×c05에서 card1 = p3 사진 + p1 이름·설명 |
 | **계층 매칭** (Step 3) | F-3: groupSplit 6 → 0, t04×c05 golden 10/10 | **F-7**: 카드가 자리를 다 차지해 p1 제목을 버림 |
 
+t04×c05(이미지 카드 3장)를 세 matcher로 그린 결과다.
+
+![greedy](docs/images/t04-product-cards-3__c05-product-launch__greedy.svg)
+
+greedy: golden 4/10, groupSplit 3. 제목 칸에 p1 소제목이 들어갔고 카드 세 장이 모두 섞였다.
+
+![hungarian](docs/images/t04-product-cards-3__c05-product-launch__hungarian.svg)
+
+hungarian: golden 8/10, groupSplit 2. 글은 role에 맞는 칸으로 갔지만 card1과 card3의 사진이 서로 바뀌었다.
+
+![hierarchical](docs/images/t04-product-cards-3__c05-product-launch__hierarchical.svg)
+
+hierarchical: golden 10/10, groupSplit 0. 카드마다 같은 제품의 사진·이름·설명이 들어갔다.
+
+- 색: 빨강 = error, 주황 = warn, 초록 = 정상, 회색 점선 = 빈 칸
+- 다시 만들기: `pnpm render t04-product-cards-3 c05-product-launch <matcher>` → `out/*.svg`
+
 - **cost (D-13~D-16)**: 네 항목을 더한다.
   - role 불일치: 20
   - 넘침: 줄이면 들어가면 2, minFontSize에서도 넘치면 넘치는 줄마다 15
@@ -121,6 +139,8 @@ greedy(슬롯을 DFS 순서로 돌며 같은 kind의 첫 항목을 넣는 방식
   2. `dropLowPriority`: 넘치는 항목을 p3 → p2 순으로 하나씩 버린다. p1은 버리지 않는다.
 
   validate와 fallback은 최대 5회 반복하고, 단계마다 `trace`에 남긴다.
+
+  fixture 99쌍에서 `dropLowPriority`가 적용된 쌍은 greedy 11쌍, hungarian 0쌍, hierarchical 0쌍이다. cost가 넘침에 벌점을 주므로(D-14) 이 99쌍에서는 hungarian·hierarchical이 줄여도 넘칠 p2·p3 글을 배치 단계에서 넣지 않았다. 넘친 채 넣는 비용이 「버림 + 비움」보다 싼 입력에서는 두 matcher에서도 이 단계가 돈다(`tests/pipeline.test.ts`).
 - **status (D-22)**
   - error가 남아 있으면 **rejected**
   - error는 없고 warn이 있거나 fallback이 한 번이라도 적용됐으면 **degraded**
@@ -135,9 +155,11 @@ greedy(슬롯을 DFS 순서로 돌며 같은 kind의 첫 항목을 넣는 방식
 
 | matcher | goldenMatch | groupSplit | p1Dropped | status (acc/deg/rej) | ms |
 |---|---|---|---|---|---|
-| greedy | 0.43 | 9 | 77 | 9 / 56 / 34 | 0.1 |
-| hungarian | 0.75 | 6 | 76 | 39 / 40 / 20 | 0.3 |
-| hierarchical | **0.89** | **0** | 79 | **43 / 38 / 18** | 0.2 |
+| greedy | 0.43 | 9 | 77 | 9 / 56 / 34 | 0.015 |
+| hungarian | 0.75 | 6 | 76 | 39 / 40 / 20 | 0.043 |
+| hierarchical | **0.89** | **0** | 79 | **43 / 38 / 18** | 0.041 |
+
+- ms는 쌍마다 워밍업 1회 뒤 21회 실행한 시간의 중앙값을 구하고, 그 값들을 평균한 것이다.
 
 - p1Dropped는 대부분 c10(p1 본문 12개)에서 나온다. 이 콘텐츠는 어떤 matcher로도 다 넣을 수 없다.
 - hierarchical의 rejected 18쌍은 셋으로 나뉜다.
@@ -154,6 +176,15 @@ golden 쌍별 결과(맞은 슬롯 / 전체):
 | t04×c05 이미지 카드 3장 | 4/10 | 8/10 | 10/10 |
 | t05×c04 roleHint 없음 | 0/5 | 2/5 | 2/5 |
 | t08×c07 사진·캡션 짝 | 3/5 | 3/5 | 5/5 |
+
+### 가중치를 바꾸면
+
+`pnpm bench:sweep`은 cost 가중치를 하나씩 절반·두 배로 바꾸고(나머지는 기본값) 99쌍을 hungarian·hierarchical로 다시 돌린다. 아래는 `bench/results/sweep-20261006-1013.md`의 값이고, 「달라진 쌍」은 기준과 최종 배치가 하나라도 다른 쌍 수를 두 배율 × 두 matcher로 합한 것이다.
+
+- 달라진 쌍이 가장 많은 가중치: role 불일치 86, p3 버림 비용 46, body 비움 비용 39.
+- 달라진 쌍이 0인 가중치: p1 버림 비용, title 비움 비용. 넘치는 줄당 비용과 image 비움 비용은 2씩이다.
+- hierarchical의 groupSplit은 26개 변형 모두에서 0이고 goldenMatch는 0.89~0.93이다.
+- hungarian은 goldenMatch 0.75~0.82, groupSplit 4~8이다.
 
 ## 7. 한계와 가정
 
