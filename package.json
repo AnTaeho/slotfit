@@ -8,6 +8,7 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "bench": "tsx bench/evaluate.ts",
+    "bench:sweep": "tsx bench/sweep.ts",
     "render": "tsx scripts/render.ts",
     "render:all": "tsx scripts/renderAll.ts"
   },
