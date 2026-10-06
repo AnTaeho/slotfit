@@ -2,6 +2,7 @@
 import type { MatchContext } from '../context';
 import type { Adjustments, MatchResult, Violation } from '../schema';
 import { contentDropped } from './rules/contentDropped';
+import { emptySlot } from './rules/emptySlot';
 import { groupSplit } from './rules/groupSplit';
 import { overflow } from './rules/overflow';
 import { priorityDropped } from './rules/priorityDropped';
@@ -9,7 +10,7 @@ import { roleMismatch } from './rules/roleMismatch';
 import { titleMissing } from './rules/titleMissing';
 import type { Rule } from './types';
 
-const DEFAULT_RULES: Rule[] = [overflow, titleMissing, priorityDropped, contentDropped, groupSplit, roleMismatch];
+const DEFAULT_RULES: Rule[] = [overflow, titleMissing, emptySlot, priorityDropped, contentDropped, groupSplit, roleMismatch];
 
 export function validate(
   ctx: MatchContext,

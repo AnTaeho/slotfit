@@ -1,8 +1,9 @@
-// validation 규칙 여섯 개(D-20, D-26)를 하나씩: 작은 인라인 입력으로 「위반 없음」과 「위반 있음」을 직접 확인한다.
+// validation 규칙 일곱 개(D-20, D-26, D-27)를 하나씩: 작은 인라인 입력으로 「위반 없음」과 「위반 있음」을 직접 확인한다.
 import { describe, expect, it } from 'vitest';
 import { buildContext } from '../src/context';
 import type { Adjustments, Assignment, Content, MatchResult, Template } from '../src/schema';
 import { contentDropped } from '../src/validation/rules/contentDropped';
+import { emptySlot } from '../src/validation/rules/emptySlot';
 import { groupSplit } from '../src/validation/rules/groupSplit';
 import { overflow } from '../src/validation/rules/overflow';
 import { priorityDropped } from '../src/validation/rules/priorityDropped';
@@ -95,6 +96,30 @@ describe('titleMissing (error)', () => {
     };
     const result: MatchResult = { assignment: [{ slotId: 'only', contentId: null }], dropped: [], totalCost: 0 };
     expect(titleMissing.check(buildContext(noTitle, content), result, NO_ADJ)).toEqual([]);
+  });
+});
+
+describe('emptySlot (warn)', () => {
+  it('모든 슬롯이 차 있으면 위반이 아니다', () => {
+    const result = resultOf({
+      title: 'head', 'a-sub': 'g1-sub', 'a-body': 'g1-body', 'b-sub': 'plain', 'b-body': 'long', note: 'plain', photo: 'pic',
+    });
+    expect(emptySlot.check(ctx, result, NO_ADJ)).toEqual([]);
+  });
+
+  it('title 슬롯이 빈 것은 이 규칙의 위반이 아니다(titleMissing이 본다)', () => {
+    const result = resultOf({ 'a-sub': 'g1-sub', 'a-body': 'g1-body', 'b-sub': 'plain', 'b-body': 'long', note: 'plain', photo: 'pic' });
+    expect(emptySlot.check(ctx, result, NO_ADJ)).toEqual([]);
+  });
+
+  it('title이 아닌 빈 슬롯마다 warn 1개, 이미지 칸도 센다', () => {
+    const violations = emptySlot.check(ctx, resultOf({ title: 'head', 'a-sub': 'g1-sub', 'a-body': 'g1-body' }), NO_ADJ);
+    expect(violations.map((v) => [v.ruleId, v.severity, v.slotId])).toEqual([
+      ['emptySlot', 'warn', 'b-sub'],
+      ['emptySlot', 'warn', 'b-body'],
+      ['emptySlot', 'warn', 'note'],
+      ['emptySlot', 'warn', 'photo'],
+    ]);
   });
 });
 
