@@ -88,8 +88,8 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   <section>
     <span class="eyebrow">SLOTFIT · STEP 0 → STEP 7</span>
     <h1>처음 읽는 사람을 위한 SlotFit 코드 가이드</h1>
-    <p class="lead">콘텐츠를 디자인 템플릿의 빈칸에 배치하고, 그 결과를 써도 되는지 판정하는 엔진을 다섯 단계에 걸쳐 만들었습니다. 각 단계에서 무엇을 만들었는지, 코드를 어떤 순서로 읽으면 되는지, 핵심 함수가 작은 예시에서 한 줄씩 어떻게 움직이는지를 처음 보는 사람 기준으로 풀어 썼습니다.</p>
-    <div class="note"><strong>읽는 법.</strong> 앞부분(Step 0)은 뼈대와 공통 개념입니다. 그 뒤 Step 1~4 장은 각각 「무엇을 왜 만들었나 → 읽을 파일 → 예시로 따라가기 → 결과」 순서입니다. Step 0 장의 숫자(테스트 8개, goldenMatch 0.40 등)는 Step 0이 끝났을 때의 값이고, 최종 값은 「마지막 수치」 장에 있습니다. Step 0 장의 코드 인용도 그때 모양입니다. 마지막에 읽기 좋게 다듬으면서 일부 이름이 바뀌었습니다(예: 규칙의 매개변수 <code>r</code> → <code>result</code>, 꾸러미에 <code>slotsById</code> 추가). 흐름과 뜻은 같습니다.</div>
+    <p class="lead">콘텐츠를 디자인 템플릿의 빈칸에 배치하고, 그 결과를 써도 되는지 판정하는 엔진을 Step 0부터 Step 7까지 단계별로 만들었습니다. 각 단계에서 무엇을 만들었는지, 코드를 어떤 순서로 읽으면 되는지, 핵심 함수가 작은 예시에서 한 줄씩 어떻게 움직이는지를 처음 보는 사람 기준으로 풀어 썼습니다.</p>
+    <div class="note"><strong>읽는 법.</strong> 앞부분(Step 0)은 뼈대와 공통 개념입니다. 그 뒤 Step 1~4 장은 각각 「무엇을 왜 만들었나 → 읽을 파일 → 예시로 따라가기 → 결과」 순서이고, 「Step 6 · 7」 장은 그 뒤에 더한 도구와 판정 기준 보완입니다. Step 1~4 장 안에서도 나중에 바뀐 곳은 그 자리에 「Step 7」이라고 적어 두었습니다. Step 0 장의 숫자(테스트 8개, goldenMatch 0.40 등)는 Step 0이 끝났을 때의 값이고, 최종 값은 「마지막 수치」 장에 있습니다. Step 0 장의 코드 인용도 그때 모양입니다. 마지막에 읽기 좋게 다듬으면서 일부 이름이 바뀌었습니다(예: 규칙의 매개변수 <code>r</code> → <code>result</code>, 꾸러미에 <code>slotsById</code> 추가). 흐름과 뜻은 같습니다.</div>
     <nav aria-label="목차">
       <ol>
         <li><a href="#arch">전체 구조 한눈에 보기</a></li>
