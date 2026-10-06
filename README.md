@@ -24,7 +24,7 @@ flowchart LR
   subgraph CORE["순수 함수 · pipeline.run()"]
     C["context.ts<br/>MatchContext"] -->|ctx| M["Matcher.match()<br/>greedy · hungarian · hierarchical<br/>(bruteForce는 테스트 전용)"]
     S["scoring/cost.ts<br/>weights.ts"] -->|짝 점수| M
-    M -->|MatchResult| V["validation/validate.ts<br/>규칙 5개"]
+    M -->|MatchResult| V["validation/validate.ts<br/>규칙 7개"]
     V -->|error| FB["fallback/<br/>shrinkFont → dropLowPriority"]
     FB -->|재검사 · 최대 5번| V
     V -->|남은 위반| D["decideStatus()<br/>accepted · degraded · rejected"]
@@ -74,6 +74,9 @@ greedy(슬롯을 DFS 순서로 돌며 같은 kind의 첫 항목을 넣는 방식
 - cost: 점수로 풀 문제
 - 구조: 제약으로 풀 문제
 - 사후: validation·fallback으로 풀 문제
+- F-7은 D-28로 풀었다. 계층 매칭이 p1을 버리면 카드를 찢지 않는 flat 해로 물러난다(4장).
+- F-8은 D-29로 풀었다. `dropLowPriority`가 찢어진 카드의 항목을 버리지 않는다(5장).
+- F-9는 남아 있다(7장).
 
 ## 4. greedy → Hungarian → 계층 매칭
 
@@ -82,6 +85,7 @@ greedy(슬롯을 DFS 순서로 돌며 같은 kind의 첫 항목을 넣는 방식
 | **greedy** | 없음. 기준선 | F-1 ~ F-5 |
 | **Hungarian** (Step 2) | F-1 대부분(t01×c01 golden 2/5 → 5/5), F-2 일부 | **F-3 카드 섞임**: t04×c05에서 card1 = p3 사진 + p1 이름·설명 |
 | **계층 매칭** (Step 3) | F-3: groupSplit 6 → 0, t04×c05 golden 10/10 | **F-7**: 카드가 자리를 다 차지해 p1 제목을 버림 |
+| **계층 매칭 + flat 해로 물러나기** (D-28) | F-7: t09×c01·c05·c09에서 제목을 살리고 p2 항목을 버린다. 세 쌍이 rejected → degraded, p1Dropped 79 → 76 | F-9. p2·p3만 손해 보는 비최적 |
 
 t04×c05(이미지 카드 3장)를 세 matcher로 그린 결과다.
 
@@ -108,39 +112,45 @@ hierarchical: golden 10/10, groupSplit 0. 카드마다 같은 제품의 사진·
 
   버림 비용은 priority에 따라 1000/30/10, 비움 비용은 title 50부터 caption 5까지다. kind가 다른 짝에는 Infinity 대신 1,000,000을 쓴다. Hungarian이 값을 빼는 과정에서 Infinity−Infinity = NaN이 나오기 때문이다(D-15).
 - **Hungarian**은 라이브러리 없이 O(N³)으로 직접 구현했다(`src/matchers/hungarian.ts`). 맞는지는 전수 탐색 oracle(`bruteForce`)과 fast-check 랜덤 입력의 totalCost를 비교해 확인한다(`tests/oracle.test.ts`).
-- **계층 매칭**(`src/matchers/hierarchical.ts`)은 네 단계로 돈다.
+- **계층 매칭**(`src/matchers/hierarchical.ts`)은 다섯 단계로 돈다.
   1. 카드끼리의 비용을 정한다. 콘텐츠 카드와 템플릿 카드의 비용은 「그 둘 안에서 Hungarian을 돌린 최소 비용」이다.
   2. 그 비용으로 카드끼리 Hungarian을 돌린다.
   3. 짝지어진 카드 안을 채운다.
   4. 남은 항목과 슬롯을 flat으로 짝짓는다.
+  5. 여기까지의 결과가 p1 항목을 버렸으면 flat 해(전체를 한 번에 푸는 Hungarian)와 견준다. flat 해가 p1을 더 적게 버리고 찢어진 카드가 하나도 없을 때만 flat 해를 낸다(D-28, Claude 결정 — 사용자 위임).
 
-  카드 밖으로 새는 항목이 없으므로 groupSplit은 구조적으로 0이다.
+  1~4단계에서는 카드 밖으로 새는 항목이 없고, 5단계는 카드를 찢지 않는 flat 해만 받으므로 groupSplit은 구조적으로 0이다.
 - **왜 최적이 아닌데도 계층 매칭인가 (D-19, Claude 결정 — 사용자 위임).**
   - 「카드가 찢어졌다」는 두 짝을 함께 봐야 판단할 수 있다. 그래서 짝별 cost의 합으로는 표현할 수 없다.
   - 계층 매칭은 다항 시간에 돌고, 단계마다 손으로 따라가며 설명할 수 있다.
-  - 비최적인 경우(F-7)는 p1 유실로 드러나므로 validation이 거절로 잡는다.
+  - 비최적 때문에 p1을 잃는 경우(F-7)에는 flat 해와 견줘, 카드를 찢지 않고 p1을 더 살리는 쪽을 낸다(D-28). fixture에서는 t09×c01·c05·c09 세 쌍이 여기에 해당한다. 그래도 p1을 잃으면 validation이 거절로 잡는다.
   - 섞인 카드는 틀린 정보다. 그것을 내보내는 것보다 드물게 거절하는 편이 낫다고 봤다.
 
 ## 5. validation / fallback과 거절 기준 (Claude 결정 — 사용자 위임)
 
-- **규칙과 severity (D-20)**
+- **규칙과 severity (D-20, D-26, D-27)**
 
   | 규칙 | severity |
   |---|---|
   | overflow | error |
   | titleMissing | error |
+  | emptySlot (제목이 아닌 빈 칸) | warn |
   | priorityDropped (p1 유실) | error |
+  | contentDropped (p2 유실) | warn |
   | groupSplit | error |
   | roleMismatch | warn |
 
   내보내면 틀린 정보가 되는 위반은 error다. role이 어긋난 것은 보기엔 어색해도 정보는 맞으므로 warn이다.
+
+  p2 항목을 버렸거나(D-26) 제목이 아닌 칸이 비면(D-27) warn이다. 둘 다 Claude 결정 — 사용자 위임. 항목마다, 칸마다 하나씩 내고 임계값은 두지 않는다. p3은 버려도 위반이 아니다. 콘텐츠를 여러 개 버렸거나 칸이 여럿 빈 결과가 accepted로 통과하던 것을 막는다.
 - **fallback 순서 (D-21)**
   1. `shrinkFont`: 글자를 minFontSize까지 줄인다.
   2. `dropLowPriority`: 넘치는 항목을 p3 → p2 순으로 하나씩 버린다. p1은 버리지 않는다.
+     찢어진 카드에 속한 항목도 버리지 않는다(D-29, Claude 결정 — 사용자 위임). 그 항목을 버리면 groupSplit error가 함께 사라져 rejected가 degraded로 바뀌기 때문이다(F-8). 그 항목의 넘침은 error로 남는다.
 
   validate와 fallback은 최대 5회 반복하고, 단계마다 `trace`에 남긴다.
 
-  fixture 99쌍에서 `dropLowPriority`가 적용된 쌍은 greedy 11쌍, hungarian 0쌍, hierarchical 0쌍이다. cost가 넘침에 벌점을 주므로(D-14) 이 99쌍에서는 hungarian·hierarchical이 줄여도 넘칠 p2·p3 글을 배치 단계에서 넣지 않았다. 넘친 채 넣는 비용이 「버림 + 비움」보다 싼 입력에서는 두 matcher에서도 이 단계가 돈다(`tests/pipeline.test.ts`).
+  fixture 99쌍에서 `dropLowPriority`가 적용된 쌍은 greedy 10쌍, hungarian 0쌍, hierarchical 0쌍이다. cost가 넘침에 벌점을 주므로(D-14) 이 99쌍에서는 hungarian·hierarchical이 줄여도 넘칠 p2·p3 글을 배치 단계에서 넣지 않았다. 넘친 채 넣는 비용이 「버림 + 비움」보다 싼 입력에서는 두 matcher에서도 이 단계가 돈다(`tests/pipeline.test.ts`).
 - **status (D-22)**
   - error가 남아 있으면 **rejected**
   - error는 없고 warn이 있거나 fallback이 한 번이라도 적용됐으면 **degraded**
@@ -155,17 +165,19 @@ hierarchical: golden 10/10, groupSplit 0. 카드마다 같은 제품의 사진·
 
 | matcher | goldenMatch | groupSplit | p1Dropped | status (acc/deg/rej) | ms |
 |---|---|---|---|---|---|
-| greedy | 0.43 | 9 | 77 | 9 / 56 / 34 | 0.015 |
-| hungarian | 0.75 | 6 | 76 | 39 / 40 / 20 | 0.043 |
-| hierarchical | **0.89** | **0** | 79 | **43 / 38 / 18** | 0.041 |
+| greedy | 0.43 | 10 | 77 | 1 / 63 / 35 | 0.015 |
+| hungarian | 0.75 | 6 | 76 | 3 / 76 / 20 | 0.043 |
+| hierarchical | **0.89** | **0** | 76 | **4 / 80 / 15** | 0.047 |
 
 - ms는 쌍마다 워밍업 1회 뒤 21회 실행한 시간의 중앙값을 구하고, 그 값들을 평균한 것이다.
 
 - p1Dropped는 대부분 c10(p1 본문 12개)에서 나온다. 이 콘텐츠는 어떤 matcher로도 다 넣을 수 없다.
-- hierarchical의 rejected 18쌍은 셋으로 나뉜다.
+- hierarchical의 rejected 15쌍은 둘로 나뉜다.
   - c10 9쌍: p1 유실
   - c11 6쌍: 줄여도 넘침
-  - t09 3쌍: F-7
+- F-7이던 t09 3쌍(c01·c05·c09)은 제목을 살리고 degraded가 됐다(D-28).
+- accepted는 p2 유실(D-26)과 빈 칸(D-27)을 warn으로 세면서 줄었다. hierarchical의 accepted 4쌍은 t01×c01, t02×c02, t02×c04, t04×c05다. 넷 다 빈 칸이 없고, 버린 항목이 있는 두 쌍(t02×c02, t02×c04)은 p3만 버렸다.
+- greedy의 groupSplit 10에는 t01×c01이 들어 있다. 전에는 fallback이 찢어진 항목을 버려 이 위반이 사라졌다(F-8, D-29).
 
 golden 쌍별 결과(맞은 슬롯 / 전체):
 
@@ -179,30 +191,33 @@ golden 쌍별 결과(맞은 슬롯 / 전체):
 
 ### 가중치를 바꾸면
 
-`pnpm bench:sweep`은 cost 가중치를 하나씩 절반·두 배로 바꾸고(나머지는 기본값) 99쌍을 hungarian·hierarchical로 다시 돌린다. 아래는 `bench/results/sweep-20261006-1013.md`의 값이고, 「달라진 쌍」은 기준과 최종 배치가 하나라도 다른 쌍 수를 두 배율 × 두 matcher로 합한 것이다.
+`pnpm bench:sweep`은 cost 가중치를 하나씩 절반·두 배로 바꾸고(나머지는 기본값) 99쌍을 hungarian·hierarchical로 다시 돌린다. 아래는 `bench/results/sweep-20261006-1040.md`의 값이고, 「달라진 쌍」은 기준과 최종 배치가 하나라도 다른 쌍 수를 두 배율 × 두 matcher로 합한 것이다.
 
-- 달라진 쌍이 가장 많은 가중치: role 불일치 86, p3 버림 비용 46, body 비움 비용 39.
+- 달라진 쌍이 가장 많은 가중치: role 불일치 85, p3 버림 비용 45, body 비움 비용 38.
 - 달라진 쌍이 0인 가중치: p1 버림 비용, title 비움 비용. 넘치는 줄당 비용과 image 비움 비용은 2씩이다.
 - hierarchical의 groupSplit은 26개 변형 모두에서 0이고 goldenMatch는 0.89~0.93이다.
 - hungarian은 goldenMatch 0.75~0.82, groupSplit 4~8이다.
+- status는 hierarchical이 26개 변형 모두 4/80/15이고, hungarian은 accepted가 모두 3이다.
 
 ## 7. 한계와 가정
 
 - **텍스트 근사.** 줄 수는 「문단 너비 ÷ 칸 폭」을 올림해서 구한다(D-3). 단어 단위 줄바꿈과 실제 글꼴을 무시하므로 실제와 줄 수가 다를 수 있다.
 - **계층 매칭은 전역 최적이 아니다.**
   - 짝 없는 카드의 비용을 「전부 버림」으로 비관적으로 잡는다.
-  - 단계 사이에서 정보를 주고받지 않는다(D-18, F-7).
+  - 단계 사이에서 정보를 주고받지 않는다(D-18).
+  - flat 해로 물러나는 것은 p1을 잃을 때뿐이다(D-28). p2·p3만 손해 보는 비최적은 그대로 남는다.
 - **cost는 근사다.** 입력 순서는 「역전 쌍 수」 대신 위치 차이의 제곱으로 근사했다(D-16). 넘침도 줄 수로만 잰다(F-9).
 - **roleHint가 없으면 자리를 잘 못 찾는다.** t05×c04 golden은 2/5다. 추정 규칙을 숨겨 두지 않은 결과다(D-8).
 - **golden은 주관적이다.** 5쌍 모두 Claude가 「디자이너라면」 기준으로 썼다(D-10). 카드 순서 교환은 정답으로 센다(D-7, D-11).
-- **fallback의 부작용.** 넘치는 항목을 버리면 groupSplit 위반까지 함께 사라질 수 있다(F-8).
+- **찢어진 카드의 넘침은 fallback이 고치지 않는다.** 그 항목을 버리면 groupSplit 위반까지 함께 사라지므로(F-8) 버리지 않고 거절한다(D-29).
+- **warn에 임계값이 없다.** p2 항목 하나를 버리거나 칸 하나가 비어도 degraded다(D-26, D-27). 99쌍 중 accepted는 hierarchical 기준 4쌍이다.
 
 ## 8. 다음에 한다면
 
 - 실제 폰트 측정(canvas 등)으로 근사를 대체한다.
 - LLM이 만든 콘텐츠를 바로 연결하고, 거절되면 「줄여서 다시 써 달라」를 fallback 단계로 넣는다.
 - 콘텐츠에 맞는 템플릿을 추천한다. 템플릿마다 totalCost와 status를 비교하면 된다.
-- 「fallback이 groupSplit을 없애면 안 된다」 규칙을 넣고(F-8), 넘침을 비율로 매긴다(F-9).
+- 넘침을 비율로 매긴다(F-9).
 
 ## 9. AI 활용 방식
 
@@ -210,7 +225,7 @@ golden 쌍별 결과(맞은 슬롯 / 전체):
 |---|---|
 | 뼈대·타입·모든 모듈 구현, Hungarian·계층 매칭 구현과 단계별 주석 | Step 0 결정 4건: 이미지 포함(D-6), 카드 교환 허용(D-7), roleHint 없음은 미상(D-8), warn 1개부터 degraded(D-9) |
 | fixture 설계, golden 초안, bench·oracle 테스트 | 「판단이 필요하면 알아서 정하고 기록하라」고 위임한 것. 그래서 아래는 Claude가 정했다 |
-| 실패 분류, cost 가중치, severity, fallback 순서, status 경계, 계층 매칭 채택 이유(D-10, D-13~D-16, D-19~D-22) | 위 위임 결정들을 검토하고 바꾸는 일(`spec.md` 부록 B) |
+| 실패 분류, cost 가중치, severity, fallback 순서, status 경계, 계층 매칭 채택 이유(D-10, D-13~D-16, D-19~D-22), p2 유실·빈 칸 warn, flat 해로 물러나기, 찢어진 카드 항목 보존(D-26~D-29) | 위 위임 결정들을 검토하고 바꾸는 일(`spec.md` 부록 B) |
 
 - 세션 안의 일 나누기:
   - 계획·검토·글쓰기는 메인 세션이 했다.
