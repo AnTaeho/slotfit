@@ -3,6 +3,8 @@ import { buildContext } from './context';
 import { MAX_ITERATIONS, POLICY } from './fallback/policy';
 import type { Matcher } from './matchers/types';
 import type { Adjustments, Content, MatchResult, PipelineResult, Status, Template, Violation } from './schema';
+import { DEFAULT_WEIGHTS } from './scoring/weights';
+import type { Weights } from './scoring/weights';
 import { validate } from './validation/validate';
 
 // fallback 단계를 적용할 때마다 trace에 이 머리말로 한 줄을 남긴다. render·bench는 이 줄 수로 적용 횟수를 센다.
@@ -32,8 +34,9 @@ function summarize(violations: Violation[]): string {
   return `error ${errors}, warn ${warns}`;
 }
 
-export function run(t: Template, c: Content, matcher: Matcher): PipelineResult {
-  const ctx = buildContext(t, c);
+// weights를 넘기면 그 가중치로 cost를 매긴다(D-25). validation·fallback·status 판정은 가중치를 보지 않는다.
+export function run(t: Template, c: Content, matcher: Matcher, weights: Weights = DEFAULT_WEIGHTS): PipelineResult {
+  const ctx = buildContext(t, c, weights);
   const trace: string[] = [];
 
   let result: MatchResult = matcher.match(ctx);

@@ -41,6 +41,31 @@ export const EMPTY_COST_BY_ROLE: Record<Role, number> = {
   image: 10,
 };
 
+// D-25: cost가 읽는 가중치 묶음. MatchContext에 실려 다니므로 파일을 고치지 않고 다른 값을 넣어
+// 결과를 비교할 수 있다(bench/sweep.ts). 숫자의 정의는 위 상수 한 곳뿐이고 여기서는 가리키기만 한다.
+// 텍스트 근사·FORBIDDEN_COST·oracle 상한·fallback·render 상수는 바꿔 가며 비교하는 대상이 아니라 넣지 않는다.
+export type Weights = {
+  roleMismatch: number;
+  roleUnknown: number;
+  shrinkNeeded: number;
+  overflowPerLine: number;
+  underfill: number;
+  order: number;
+  dropByPriority: Record<1 | 2 | 3, number>;
+  emptyByRole: Record<Role, number>;
+};
+
+export const DEFAULT_WEIGHTS: Weights = {
+  roleMismatch: ROLE_MISMATCH_COST,
+  roleUnknown: ROLE_UNKNOWN_COST,
+  shrinkNeeded: SHRINK_NEEDED_COST,
+  overflowPerLine: OVERFLOW_PER_LINE_COST,
+  underfill: UNDERFILL_COST,
+  order: ORDER_COST,
+  dropByPriority: DROP_COST_BY_PRIORITY,
+  emptyByRole: EMPTY_COST_BY_ROLE,
+};
+
 // ---------- oracle 크기 상한 ----------
 // D-17: bruteForce는 전수 탐색이라 이보다 크면 느리다. oracle 전용으로 tests/oracle.test.ts에서만 실행한다.
 export const BRUTE_FORCE_MAX_SLOTS = 6; // D-17: spec Step 2의 「슬롯 ≤ 6」

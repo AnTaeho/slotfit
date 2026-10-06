@@ -14,7 +14,7 @@ function match(ctx: MatchContext): MatchResult {
     const item = ctx.content.items.find((candidate) => !used.has(candidate.id) && candidate.kind === slot.type);
     if (item === undefined) {
       assignment.push({ slotId: slot.id, contentId: null });
-      totalCost += DUMMY_ITEM_COST(slot); // 비움
+      totalCost += DUMMY_ITEM_COST(slot, ctx.weights); // 비움
       continue;
     }
     used.add(item.id);
@@ -24,7 +24,7 @@ function match(ctx: MatchContext): MatchResult {
 
   const droppedItems = ctx.content.items.filter((item) => !used.has(item.id));
   // totalCost를 다른 matcher와 같은 기준(실제 짝 cost + 버림 + 비움)으로 맞춘다. 고르는 방식은 cost를 보지 않는다.
-  for (const item of droppedItems) totalCost += DUMMY_SLOT_COST(item); // 버림
+  for (const item of droppedItems) totalCost += DUMMY_SLOT_COST(item, ctx.weights); // 버림
   return { assignment, dropped: droppedItems.map((item) => item.id), totalCost };
 }
 

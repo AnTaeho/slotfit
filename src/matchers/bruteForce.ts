@@ -37,7 +37,7 @@ function match(ctx: MatchContext): MatchResult {
       // 다 골랐다: 남은 슬롯은 비움 비용을 더한다.
       let total = costSoFar;
       slots.forEach((slot, j) => {
-        if (!usedSlot[j]) total += DUMMY_ITEM_COST(slot);
+        if (!usedSlot[j]) total += DUMMY_ITEM_COST(slot, ctx.weights);
       });
       // 같은 비용이면 먼저 찾은 배치를 둔다.
       if (found.best === null || total < found.best.totalCost) {
@@ -55,7 +55,7 @@ function match(ctx: MatchContext): MatchResult {
     });
     // 또는 버린다.
     choice[k] = null;
-    search(k + 1, costSoFar + DUMMY_SLOT_COST(item));
+    search(k + 1, costSoFar + DUMMY_SLOT_COST(item, ctx.weights));
   };
   search(0, 0);
 
