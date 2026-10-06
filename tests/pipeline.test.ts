@@ -4,8 +4,10 @@ import { buildContext } from '../src/context';
 import { dropLowPriority, shrinkFont } from '../src/fallback/steps';
 import { loadContent, loadTemplate } from '../src/io/loader';
 import { hierarchical } from '../src/matchers/hierarchical';
+import { hungarian } from '../src/matchers/hungarian';
 import { decideStatus, run } from '../src/pipeline';
 import type { Adjustments, Content, MatchResult, PipelineResult, Template, Violation } from '../src/schema';
+import { DROP_COST_BY_PRIORITY, EMPTY_COST_BY_ROLE, OVERFLOW_PER_LINE_COST, SHRINK_NEEDED_COST } from '../src/scoring/weights';
 import { validate } from '../src/validation/validate';
 
 const error: Violation = { ruleId: 'overflow', severity: 'error', detail: 'e' };
@@ -80,5 +82,34 @@ describe('fallback은 입력을 바꾸지 않는다', () => {
     expect({ result, adj }).toEqual(before);
     expect(next.r.dropped).toEqual(['x']);
     expect(next.r.assignment).toEqual([{ slotId: 'b', contentId: null }]);
+  });
+});
+
+// hungarian은 cost가 넘침에 벌점을 주므로 넘칠 글을 대개 처음부터 버린다. 그래도 「넘친 채 넣기」가
+// 「버리고 칸을 비우기」보다 싸면 넣고, 그때는 fallback이 끝까지 돈다.
+describe('fallback: hungarian에서도 dropLowPriority가 도는 경우', () => {
+  // tinyTemplate의 칸(폭 60, 16px → 최소 12px, 2줄)에 공백 없는 한글 12자, priority 2.
+  //   12px: 12자 × 12 = 144px → ceil(144 / 60) = 3줄. 담을 수 있는 줄 수 2 → 1줄 초과.
+  //   넣는 cost = SHRINK_NEEDED_COST + 1 × OVERFLOW_PER_LINE_COST (role 일치, 2줄을 다 채움, 항목·슬롯이 하나씩이라 순서 0)
+  //   안 넣는 cost = 버림(p2) + 비움(body)
+  const overflowing: Content = {
+    id: 'c-one-line-over', description: '줄여도 한 줄 넘치는 p2 본문',
+    items: [{ id: 'x', kind: 'text', roleHint: 'body', text: '가나다라마바사아자차카타', priority: 2 }],
+  };
+
+  it('전제: 넘친 채 넣는 쪽이 버리고 비우는 쪽보다 싸다', () => {
+    expect(SHRINK_NEEDED_COST + 1 * OVERFLOW_PER_LINE_COST).toBeLessThan(DROP_COST_BY_PRIORITY[2] + EMPTY_COST_BY_ROLE.body);
+  });
+
+  it('넘친 채 배치 → shrinkFont(12px에서도 넘침) → dropLowPriority가 x를 버린다', () => {
+    const result = run(tinyTemplate, overflowing, hungarian);
+    expect(result.trace[0]).toContain('dropped 0'); // matcher는 버리지 않고 넣었다
+    const fallbackLines = result.trace.filter((line) => line.startsWith('fallback#'));
+    expect(fallbackLines).toHaveLength(2);
+    expect(fallbackLines[0]).toContain('shrinkFont');
+    expect(fallbackLines[1]).toContain('dropLowPriority');
+    expect(result.dropped).toEqual(['x']);
+    expect(result.assignment).toEqual([{ slotId: 'b', contentId: null }]);
+    expect(result.status).toBe('degraded'); // 넘침은 사라졌고 fallback이 적용됐다(D-22)
   });
 });
