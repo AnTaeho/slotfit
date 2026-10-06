@@ -10,7 +10,7 @@ import {
 import type { Pair, ScoredRun } from './pairs';
 
 // 실행 시간 측정: 쌍마다 워밍업 뒤 여러 번 재고 중앙값을 쓴다. 한 번 잰 값은 JIT·GC에 따라 실행마다 흔들린다.
-// 엔진 가중치가 아니라 bench의 측정 설정이라 weights.ts가 아닌 여기에 둔다.
+// bench의 측정 설정이라 여기에 둔다(weights.ts는 엔진 가중치만 담는다).
 const TIMING_WARMUP_RUNS = 1; // 재기 전에 버리는 실행 횟수
 const TIMING_RUNS = 21; // 재는 횟수. 홀수라 중앙값이 가운데 값 하나로 정해진다
 const SUMMARY_COLUMNS = ['matcher', 'goldenMatch', 'errors', 'warns', 'p1Dropped', 'groupSplit', 'status (acc/deg/rej)', 'ms'];

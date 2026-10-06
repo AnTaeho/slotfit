@@ -1,5 +1,5 @@
 // 가중치 민감도 sweep: cost 가중치를 하나씩 절반·두 배로 바꿔 모든 쌍을 다시 돌리고, 기준(기본값)과 얼마나 달라지는지 표로 낸다.
-// 가중치 값을 정하는 도구가 아니라 「어느 숫자를 건드리면 결과가 움직이는가」를 보는 도구다. weights.ts는 고치지 않는다(D-25).
+// 「어느 숫자를 건드리면 결과가 움직이는가」를 보는 도구다. 가중치 값은 정하지 않고 weights.ts도 고치지 않는다(D-25).
 import { loadAllContents, loadAllTemplates } from '../src/io/loader';
 import { findMatcher } from '../src/matchers';
 import type { Matcher } from '../src/matchers';
@@ -9,7 +9,7 @@ import type { Weights } from '../src/scoring/weights';
 import { buildPairs, goldenMatchText, NONE, runScored, saveReport, stamp, statusText, tally, toTable } from './pairs';
 import type { Pair, ScoredRun } from './pairs';
 
-// sweep 설정. 엔진 가중치가 아니라 bench의 실험 설정이라 weights.ts가 아닌 여기에 둔다.
+// sweep 설정. bench의 실험 설정이라 여기에 둔다(weights.ts는 엔진 가중치만 담는다).
 const SWEEP_FACTORS = [0.5, 2]; // 가중치 하나에 곱해 보는 배율
 const SWEEP_MATCHER_NAMES = ['hungarian', 'hierarchical']; // greedy는 cost를 보지 않고 고르므로 뺀다
 const TOP_SENSITIVE_COUNT = 3; // 「가장 민감한 가중치」로 적는 개수
