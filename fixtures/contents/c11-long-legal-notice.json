@@ -1,0 +1,9 @@
+{
+  "id": "c11-long-legal-notice",
+  "description": "줄여도 안 들어가는 p1 본문. 버릴 수도 없어 거절이 맞다",
+  "items": [
+    { "id": "title", "kind": "text", "roleHint": "title", "text": "교환·환불 안내", "priority": 1 },
+    { "id": "notice", "kind": "text", "roleHint": "body", "text": "구매하신 상품은 받은 날부터 칠 일 안에 교환이나 환불을 신청할 수 있습니다. 다만 포장을 뜯었거나 사용한 흔적이 있는 상품, 고객의 실수로 훼손된 상품은 교환과 환불이 어렵습니다. 할인 행사로 산 상품은 차액을 돌려드리지 않으며, 환불은 처음 결제한 수단으로만 진행됩니다.", "priority": 1 },
+    { "id": "caption", "kind": "text", "roleHint": "caption", "text": "매장마다 다를 수 있음", "priority": 3 }
+  ]
+}

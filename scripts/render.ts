@@ -37,6 +37,7 @@ function main(): void {
 
   console.log(path);
   console.log(`status: ${result.status}`);
+  for (const line of result.trace) console.log(`  trace: ${line}`);
   for (const v of result.violations) {
     console.log(`  [${v.severity}] ${v.ruleId} ${v.slotId ?? '-'} ← ${v.contentId ?? '-'}: ${v.detail}`);
   }

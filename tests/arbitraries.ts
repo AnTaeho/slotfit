@@ -1,6 +1,7 @@
-// fast-check 랜덤 입력 생성기: Template(frame 아래 슬롯과 1단계 그룹)과 Content.
+// fast-check 랜덤 입력 생성기: Template(frame 아래 슬롯과 1단계 그룹)과 Content. oracle용 작은 크기 버전도 둔다.
 import fc from 'fast-check';
 import type { Content, ContentItem, GroupNode, Role, Slot, Template, TemplateNode } from '../src/schema';
+import { BRUTE_FORCE_MAX_ITEMS, BRUTE_FORCE_MAX_SLOTS } from '../src/scoring/weights';
 
 type TextRole = Exclude<Role, 'image'>;
 type SlotSeed =
@@ -33,34 +34,45 @@ const childSeed: fc.Arbitrary<SlotSeed | SlotSeed[]> = fc.oneof(
 );
 
 // id는 순번으로 붙여 유일하게 만든다. 좌표는 매칭과 무관해 고정한다.
+function toTemplate(seeds: (SlotSeed | SlotSeed[])[]): Template {
+  let slotCount = 0;
+  let groupCount = 0;
+  const toSlot = (seed: SlotSeed): Slot => {
+    const id = `s${slotCount++}`;
+    const box = { x: 0, y: 0, w: seed.w, h: seed.h };
+    if (seed.type === 'image') return { id, type: 'image', role: 'image', box };
+    return {
+      id, type: 'text', role: seed.role, box,
+      fontSize: seed.fontSize, minFontSize: Math.min(seed.fontSize, 10), maxLines: seed.maxLines,
+    };
+  };
+  const children: TemplateNode[] = seeds.map((seed) => {
+    if (!Array.isArray(seed)) return toSlot(seed);
+    const group: GroupNode = {
+      id: `g${groupCount++}`, type: 'group', box: { x: 0, y: 0, w: 600, h: 300 }, children: [],
+    };
+    group.children = seed.map(toSlot);
+    return group;
+  });
+  return {
+    id: 't-random',
+    description: 'fast-check 랜덤 템플릿',
+    root: { id: 'root', type: 'frame', box: { x: 0, y: 0, w: 600, h: 400 }, children },
+  };
+}
+
+const slotCountOf = (seeds: (SlotSeed | SlotSeed[])[]): number =>
+  seeds.reduce((sum, seed) => sum + (Array.isArray(seed) ? seed.length : 1), 0);
+
 export const templateArb: fc.Arbitrary<Template> = fc
   .array(childSeed, { minLength: 0, maxLength: 5 })
-  .map((seeds) => {
-    let slotCount = 0;
-    let groupCount = 0;
-    const toSlot = (seed: SlotSeed): Slot => {
-      const id = `s${slotCount++}`;
-      const box = { x: 0, y: 0, w: seed.w, h: seed.h };
-      if (seed.type === 'image') return { id, type: 'image', role: 'image', box };
-      return {
-        id, type: 'text', role: seed.role, box,
-        fontSize: seed.fontSize, minFontSize: Math.min(seed.fontSize, 10), maxLines: seed.maxLines,
-      };
-    };
-    const children: TemplateNode[] = seeds.map((seed) => {
-      if (!Array.isArray(seed)) return toSlot(seed);
-      const group: GroupNode = {
-        id: `g${groupCount++}`, type: 'group', box: { x: 0, y: 0, w: 600, h: 300 }, children: [],
-      };
-      group.children = seed.map(toSlot);
-      return group;
-    });
-    return {
-      id: 't-random',
-      description: 'fast-check 랜덤 템플릿',
-      root: { id: 'root', type: 'frame', box: { x: 0, y: 0, w: 600, h: 400 }, children },
-    };
-  });
+  .map(toTemplate);
+
+// oracle(bruteForce)용: 슬롯 ≤ BRUTE_FORCE_MAX_SLOTS.
+export const smallTemplateArb: fc.Arbitrary<Template> = fc
+  .array(childSeed, { minLength: 0, maxLength: BRUTE_FORCE_MAX_SLOTS })
+  .filter((seeds) => slotCountOf(seeds) <= BRUTE_FORCE_MAX_SLOTS)
+  .map(toTemplate);
 
 type ItemSeed = {
   kind: 'text' | 'image';
@@ -79,9 +91,8 @@ const itemSeed: fc.Arbitrary<ItemSeed> = fc.record({
 });
 
 // id는 순번으로 유일. text 항목은 항상 text를 갖고, image 항목은 갖지 않는다.
-export const contentArb: fc.Arbitrary<Content> = fc
-  .array(itemSeed, { minLength: 0, maxLength: 8 })
-  .map((seeds) => ({
+function toContent(seeds: ItemSeed[]): Content {
+  return {
     id: 'c-random',
     description: 'fast-check 랜덤 콘텐츠',
     items: seeds.map((seed, index): ContentItem => {
@@ -91,4 +102,14 @@ export const contentArb: fc.Arbitrary<Content> = fc
       if (seed.groupId !== undefined) item.groupId = seed.groupId;
       return item;
     }),
-  }));
+  };
+}
+
+export const contentArb: fc.Arbitrary<Content> = fc
+  .array(itemSeed, { minLength: 0, maxLength: 8 })
+  .map(toContent);
+
+// oracle(bruteForce)용: 항목 ≤ BRUTE_FORCE_MAX_ITEMS.
+export const smallContentArb: fc.Arbitrary<Content> = fc
+  .array(itemSeed, { minLength: 0, maxLength: BRUTE_FORCE_MAX_ITEMS })
+  .map(toContent);

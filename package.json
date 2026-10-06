@@ -8,7 +8,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "bench": "tsx bench/evaluate.ts",
-    "render": "tsx scripts/render.ts"
+    "render": "tsx scripts/render.ts",
+    "render:all": "tsx scripts/renderAll.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",

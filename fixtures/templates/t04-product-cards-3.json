@@ -1,0 +1,32 @@
+{
+  "id": "t04-product-cards-3",
+  "description": "제목 + 카드 3장(이미지/소제목/설명). 이미지가 든 카드형, 카드끼리 섞이는지 확인용",
+  "root": {
+    "id": "root", "type": "frame", "box": { "x": 0, "y": 0, "w": 900, "h": 480 },
+    "children": [
+      { "id": "title", "type": "text", "role": "title",
+        "box": { "x": 30, "y": 30, "w": 840, "h": 56 }, "fontSize": 32, "minFontSize": 22, "maxLines": 1 },
+      { "id": "card1", "type": "group", "box": { "x": 30, "y": 110, "w": 260, "h": 340 }, "children": [
+        { "id": "card1-img", "type": "image", "role": "image", "box": { "x": 40, "y": 120, "w": 240, "h": 130 } },
+        { "id": "card1-sub", "type": "text", "role": "subtitle",
+          "box": { "x": 40, "y": 262, "w": 240, "h": 32 }, "fontSize": 18, "minFontSize": 14, "maxLines": 1 },
+        { "id": "card1-body", "type": "text", "role": "body",
+          "box": { "x": 40, "y": 302, "w": 240, "h": 130 }, "fontSize": 14, "minFontSize": 11, "maxLines": 4 }
+      ]},
+      { "id": "card2", "type": "group", "box": { "x": 320, "y": 110, "w": 260, "h": 340 }, "children": [
+        { "id": "card2-img", "type": "image", "role": "image", "box": { "x": 330, "y": 120, "w": 240, "h": 130 } },
+        { "id": "card2-sub", "type": "text", "role": "subtitle",
+          "box": { "x": 330, "y": 262, "w": 240, "h": 32 }, "fontSize": 18, "minFontSize": 14, "maxLines": 1 },
+        { "id": "card2-body", "type": "text", "role": "body",
+          "box": { "x": 330, "y": 302, "w": 240, "h": 130 }, "fontSize": 14, "minFontSize": 11, "maxLines": 4 }
+      ]},
+      { "id": "card3", "type": "group", "box": { "x": 610, "y": 110, "w": 260, "h": 340 }, "children": [
+        { "id": "card3-img", "type": "image", "role": "image", "box": { "x": 620, "y": 120, "w": 240, "h": 130 } },
+        { "id": "card3-sub", "type": "text", "role": "subtitle",
+          "box": { "x": 620, "y": 262, "w": 240, "h": 32 }, "fontSize": 18, "minFontSize": 14, "maxLines": 1 },
+        { "id": "card3-body", "type": "text", "role": "body",
+          "box": { "x": 620, "y": 302, "w": 240, "h": 130 }, "fontSize": 14, "minFontSize": 11, "maxLines": 4 }
+      ]}
+    ]
+  }
+}

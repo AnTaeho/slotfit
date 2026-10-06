@@ -1,0 +1,17 @@
+{
+  "templateId": "t04-product-cards-3",
+  "contentId": "c05-product-launch",
+  "assignment": [
+    { "slotId": "title", "contentId": "title" },
+    { "slotId": "card1-img", "contentId": "p1-img" },
+    { "slotId": "card1-sub", "contentId": "p1-sub" },
+    { "slotId": "card1-body", "contentId": "p1-body" },
+    { "slotId": "card2-img", "contentId": "p2-img" },
+    { "slotId": "card2-sub", "contentId": "p2-sub" },
+    { "slotId": "card2-body", "contentId": "p2-body" },
+    { "slotId": "card3-img", "contentId": "p3-img" },
+    { "slotId": "card3-sub", "contentId": "p3-sub" },
+    { "slotId": "card3-body", "contentId": "p3-body" }
+  ],
+  "note": "제품마다 사진·이름·설명이 한 카드에 모여야 한다. 카드 순서는 p1→p3로 적었지만 D-7에 따라 카드끼리 통째로 바뀌어도 정답"
+}

@@ -8,5 +8,5 @@
     { "slotId": "cardB-sub", "contentId": "c2-sub" },
     { "slotId": "cardB-body", "contentId": "c2-body" }
   ],
-  "note": "카드 A/B 순서는 바뀌어도 정답으로 인정할지 결정 필요"
+  "note": "D-7: 카드 A/B를 통째로 바꾼 배치도 정답. 카드 안에서 소제목·설명이 서로 다른 카드로 갈리면 오답"
 }

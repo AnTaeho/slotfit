@@ -1,0 +1,19 @@
+{
+  "id": "t05-narrow-banner",
+  "description": "세로형 좁은 배너. 본문 칸 폭이 110px이라 긴 문장은 넘친다(좁은 슬롯)",
+  "root": {
+    "id": "root", "type": "frame", "box": { "x": 0, "y": 0, "w": 300, "h": 600 },
+    "children": [
+      { "id": "title", "type": "text", "role": "title",
+        "box": { "x": 20, "y": 20, "w": 260, "h": 80 }, "fontSize": 28, "minFontSize": 20, "maxLines": 2 },
+      { "id": "subtitle", "type": "text", "role": "subtitle",
+        "box": { "x": 20, "y": 110, "w": 260, "h": 30 }, "fontSize": 16, "minFontSize": 12, "maxLines": 1 },
+      { "id": "body-left", "type": "text", "role": "body",
+        "box": { "x": 20, "y": 160, "w": 110, "h": 100 }, "fontSize": 14, "minFontSize": 11, "maxLines": 4 },
+      { "id": "body-right", "type": "text", "role": "body",
+        "box": { "x": 170, "y": 160, "w": 110, "h": 100 }, "fontSize": 14, "minFontSize": 11, "maxLines": 4 },
+      { "id": "caption", "type": "text", "role": "caption",
+        "box": { "x": 20, "y": 550, "w": 260, "h": 24 }, "fontSize": 11, "minFontSize": 9, "maxLines": 1 }
+    ]
+  }
+}
