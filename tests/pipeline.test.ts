@@ -1,8 +1,9 @@
-// pipeline: status 판정 경계(D-22), fallback(D-21)이 고치는 경우·거절하는 경우, 입력 불변.
+// pipeline: status 판정 경계(D-22), fallback(D-21, D-29)이 고치는 경우·거절하는 경우, 입력 불변.
 import { describe, expect, it } from 'vitest';
 import { buildContext } from '../src/context';
 import { dropLowPriority, shrinkFont } from '../src/fallback/steps';
 import { loadContent, loadTemplate } from '../src/io/loader';
+import { greedy } from '../src/matchers/greedy';
 import { hierarchical } from '../src/matchers/hierarchical';
 import { hungarian } from '../src/matchers/hungarian';
 import { decideStatus, run } from '../src/pipeline';
@@ -111,5 +112,22 @@ describe('fallback: hungarian에서도 dropLowPriority가 도는 경우', () => 
     expect(result.dropped).toEqual(['x']);
     expect(result.assignment).toEqual([{ slotId: 'b', contentId: null }]);
     expect(result.status).toBe('degraded'); // 넘침은 사라졌고 fallback이 적용됐다(D-22)
+  });
+});
+
+// F-8: greedy는 t01 × c01에서 카드 g1의 소제목을 그룹 밖 제목 칸에, 본문을 cardA 소제목 칸에 넣어 카드를 찢고, 그 본문은 줄여도 넘친다.
+// 그 본문을 버리면 groupSplit error까지 사라져 degraded가 되므로, 찢어진 카드의 항목은 버리지 않는다(D-29).
+describe('fallback: 찢어진 카드의 항목은 버리지 않는다 (D-29, F-8)', () => {
+  const result = run(loadTemplate('t01-sale-cards'), loadContent('c01-summer-sale'), greedy);
+
+  it('greedy t01 × c01: groupSplit 위반이 남고 rejected', () => {
+    expect(result.violations.some((v) => v.ruleId === 'groupSplit')).toBe(true);
+    expect(result.status).toBe('rejected');
+  });
+
+  it('dropLowPriority가 돌지 않아 버린 항목이 늘지 않고, 넘침도 error로 남는다', () => {
+    expect(result.trace.some((line) => line.startsWith('fallback#') && line.includes('dropLowPriority'))).toBe(false);
+    expect(result.dropped).not.toContain('c1-body');
+    expect(result.violations.some((v) => v.ruleId === 'overflow' && v.contentId === 'c1-body')).toBe(true);
   });
 });
