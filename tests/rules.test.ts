@@ -1,7 +1,8 @@
-// validation 규칙 다섯 개(D-20)를 하나씩: 작은 인라인 입력으로 「위반 없음」과 「위반 있음」을 직접 확인한다.
+// validation 규칙 여섯 개(D-20, D-26)를 하나씩: 작은 인라인 입력으로 「위반 없음」과 「위반 있음」을 직접 확인한다.
 import { describe, expect, it } from 'vitest';
 import { buildContext } from '../src/context';
 import type { Adjustments, Assignment, Content, MatchResult, Template } from '../src/schema';
+import { contentDropped } from '../src/validation/rules/contentDropped';
 import { groupSplit } from '../src/validation/rules/groupSplit';
 import { overflow } from '../src/validation/rules/overflow';
 import { priorityDropped } from '../src/validation/rules/priorityDropped';
@@ -106,6 +107,25 @@ describe('priorityDropped (error)', () => {
     const violations = priorityDropped.check(ctx, resultOf({}, ['head', 'plain']), NO_ADJ);
     expect(violations).toHaveLength(1);
     expect(violations[0]).toMatchObject({ ruleId: 'priorityDropped', severity: 'error', contentId: 'head' });
+  });
+});
+
+describe('contentDropped (warn)', () => {
+  it('버린 항목이 없거나 priority 3만 버려졌으면 위반이 아니다', () => {
+    expect(contentDropped.check(ctx, resultOf({ title: 'head' }), NO_ADJ)).toEqual([]);
+    expect(contentDropped.check(ctx, resultOf({ title: 'head' }, ['plain', 'pic']), NO_ADJ)).toEqual([]);
+  });
+
+  it('priority 1이 버려진 것은 이 규칙의 위반이 아니다(priorityDropped가 본다)', () => {
+    expect(contentDropped.check(ctx, resultOf({}, ['head']), NO_ADJ)).toEqual([]);
+  });
+
+  it('priority 2가 버려지면 항목마다 warn 1개, dropped 순서대로', () => {
+    const violations = contentDropped.check(ctx, resultOf({ title: 'head' }, ['g1-sub', 'long', 'plain']), NO_ADJ);
+    expect(violations.map((v) => [v.ruleId, v.severity, v.contentId])).toEqual([
+      ['contentDropped', 'warn', 'g1-sub'],
+      ['contentDropped', 'warn', 'long'],
+    ]);
   });
 });
 
