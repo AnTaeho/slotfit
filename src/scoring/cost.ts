@@ -1,17 +1,16 @@
 // 콘텐츠를 슬롯에 넣었을 때의 나쁨 점수(cost)와 버림/비움 비용. D-13~D-16.
 // cost = role 항 + 넘침 항 + 너무 짧음 항 + 입력 순서 항. kind가 다르면 FORBIDDEN_COST 하나로 끝.
+// 가중치는 ctx.weights에서 읽는다(D-25). 따로 넘기지 않으면 weights.ts의 DEFAULT_WEIGHTS다.
 import type { MatchContext } from '../context';
 import type { ContentItem, Slot, TextSlot } from '../schema';
 import { fits, lineHeight, measureLines, textWidthEm } from '../text/measure';
-import {
-  DROP_COST_BY_PRIORITY, EMPTY_COST_BY_ROLE, FORBIDDEN_COST, ORDER_COST, OVERFLOW_PER_LINE_COST,
-  ROLE_MISMATCH_COST, ROLE_UNKNOWN_COST, SHRINK_NEEDED_COST, UNDERFILL_COST,
-} from './weights';
+import { DEFAULT_WEIGHTS, FORBIDDEN_COST } from './weights';
+import type { Weights } from './weights';
 
 // role 항: roleHint가 있는데 슬롯 role과 다르면 벌점. roleHint가 없으면(D-8) 0.
-function roleCost(item: ContentItem, slot: Slot): number {
-  if (item.roleHint === undefined) return ROLE_UNKNOWN_COST;
-  return item.roleHint === slot.role ? 0 : ROLE_MISMATCH_COST;
+function roleCost(item: ContentItem, slot: Slot, weights: Weights): number {
+  if (item.roleHint === undefined) return weights.roleUnknown;
+  return item.roleHint === slot.role ? 0 : weights.roleMismatch;
 }
 
 // minFontSize에서 슬롯이 담을 수 있는 줄 수 = min(maxLines, 높이에 들어가는 줄 수).
@@ -20,22 +19,22 @@ function capacityAtMin(slot: TextSlot): number {
 }
 
 // 넘침 항: 기본 크기로 들어가면 0. 아니면 「줄여야 함」 벌점 + minFontSize로도 넘치는 줄 수 × 줄당 벌점.
-function overflowCost(text: string, slot: TextSlot): number {
+function overflowCost(text: string, slot: TextSlot, weights: Weights): number {
   if (fits(text, slot, slot.fontSize)) return 0;
   // minFontSize에서 fits면 초과 0. fits와 capacity 계산이 부동소수 경계에서 어긋나지 않게 먼저 본다.
-  if (fits(text, slot, slot.minFontSize)) return SHRINK_NEEDED_COST;
+  if (fits(text, slot, slot.minFontSize)) return weights.shrinkNeeded;
   const lines = measureLines(text, slot.minFontSize, slot.box.w);
   const excess = Math.max(0, lines - capacityAtMin(slot));
-  return SHRINK_NEEDED_COST + excess * OVERFLOW_PER_LINE_COST;
+  return weights.shrinkNeeded + excess * weights.overflowPerLine;
 }
 
 // 너무 짧음 항: 기본 크기에서 텍스트가 차지하는 줄 수(소수, 문단 너비 합 기준)가 maxLines보다 적을수록 크다.
 // 예: maxLines 4, 텍스트가 1줄 분량 → used 1, underfill 0.75 → 4 × 0.75 = 3.
-function underfillCost(text: string, slot: TextSlot): number {
+function underfillCost(text: string, slot: TextSlot, weights: Weights): number {
   const widthEm = text.split('\n').reduce((sum, paragraph) => sum + textWidthEm(paragraph), 0);
   const used = Math.min(slot.maxLines, (widthEm * slot.fontSize) / slot.box.w);
   const underfill = 1 - used / slot.maxLines;
-  return UNDERFILL_COST * underfill;
+  return weights.underfill * underfill;
 }
 
 // 0~1 상대 위치. 원소가 하나면 0.
@@ -57,7 +56,7 @@ function orderCost(item: ContentItem, slot: Slot, ctx: MatchContext): number {
   // 제곱(볼록)이라 두 짝을 엇갈리게 놓으면 항상 더 비싸다. 절댓값이면 엇갈린 배치와 바른 배치가
   // 동점이 되는 경우가 있다(예: t02×c02 본문 0.25·0.5 → 슬롯 0.5·1: 0.25+0.5 = 0.75+0).
   const diff = itemPos - slotPos;
-  return ORDER_COST * diff * diff;
+  return ctx.weights.order * diff * diff;
 }
 
 // 짝 하나의 나쁨 점수. 순서대로 role 항 + 넘침 항 + 너무 짧음 항 + 입력 순서 항.
@@ -65,25 +64,25 @@ export function cost(item: ContentItem, slot: Slot, ctx: MatchContext): number {
   // D-15: kind 불일치는 큰 유한값. 다른 항은 보지 않는다.
   if (item.kind !== slot.type) return FORBIDDEN_COST;
 
-  const role = roleCost(item, slot);
+  const role = roleCost(item, slot, ctx.weights);
   const order = orderCost(item, slot, ctx);
   let overflow = 0;
   let underfill = 0;
   // 넘침·너무 짧음은 텍스트 짝만. 이미지 짝은 role·순서만 본다.
   if (slot.type === 'text') {
     const text = item.text ?? '';
-    overflow = overflowCost(text, slot);
-    underfill = underfillCost(text, slot);
+    overflow = overflowCost(text, slot, ctx.weights);
+    underfill = underfillCost(text, slot, ctx.weights);
   }
   return role + overflow + underfill + order;
 }
 
 // 항목을 버리는 비용(dummy 슬롯과 짝). priority가 1에 가까울수록 크다.
-export function DUMMY_SLOT_COST(item: ContentItem): number {
-  return DROP_COST_BY_PRIORITY[item.priority];
+export function DUMMY_SLOT_COST(item: ContentItem, weights: Weights = DEFAULT_WEIGHTS): number {
+  return weights.dropByPriority[item.priority];
 }
 
 // 슬롯을 비워 두는 비용(dummy 항목과 짝). title이 비는 것이 가장 비싸다.
-export function DUMMY_ITEM_COST(slot: Slot): number {
-  return EMPTY_COST_BY_ROLE[slot.role];
+export function DUMMY_ITEM_COST(slot: Slot, weights: Weights = DEFAULT_WEIGHTS): number {
+  return weights.emptyByRole[slot.role];
 }

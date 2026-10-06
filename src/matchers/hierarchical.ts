@@ -23,6 +23,7 @@
 import type { MatchContext } from '../context';
 import type { ContentItem, MatchResult, Slot } from '../schema';
 import { DUMMY_ITEM_COST, DUMMY_SLOT_COST } from '../scoring/cost';
+import type { Weights } from '../scoring/weights';
 import { collectGroups } from '../tree/traverse';
 import { toMatchResult } from './costMatrix';
 import type { SubproblemResult } from './costMatrix';
@@ -52,10 +53,10 @@ function collectTemplateGroups(ctx: MatchContext): TemplateGroup[] {
     .filter((group) => group.slots.length > 0);
 }
 
-const dropAllCost = (items: readonly ContentItem[]): number =>
-  items.reduce((sum, item) => sum + DUMMY_SLOT_COST(item), 0);
-const emptyAllCost = (slots: readonly Slot[]): number =>
-  slots.reduce((sum, slot) => sum + DUMMY_ITEM_COST(slot), 0);
+const dropAllCost = (items: readonly ContentItem[], weights: Weights): number =>
+  items.reduce((sum, item) => sum + DUMMY_SLOT_COST(item, weights), 0);
+const emptyAllCost = (slots: readonly Slot[], weights: Weights): number =>
+  slots.reduce((sum, slot) => sum + DUMMY_ITEM_COST(slot, weights), 0);
 
 // 2) 그룹끼리 Hungarian. 반환값[콘텐츠 그룹 번호] = 템플릿 그룹 번호(templateGroups.length 이상이면 짝 없음).
 // costMatrix와 같은 모양: 행 = [콘텐츠 그룹들, dummy(템플릿 그룹 수)], 열 = [템플릿 그룹들, dummy(콘텐츠 그룹 수)].
@@ -66,13 +67,14 @@ function pairGroups(
   contentGroups: ContentGroup[],
   templateGroups: TemplateGroup[],
   pairResults: SubproblemResult[][],
+  weights: Weights,
 ): number[] {
   const groupRows = contentGroups.map((contentGroup, c) => [
     ...(pairResults[c] ?? []).map((result) => result.cost),
-    ...contentGroups.map(() => dropAllCost(contentGroup.items)),
+    ...contentGroups.map(() => dropAllCost(contentGroup.items, weights)),
   ]);
   const dummyRows = templateGroups.map(() => [
-    ...templateGroups.map((templateGroup) => emptyAllCost(templateGroup.slots)),
+    ...templateGroups.map((templateGroup) => emptyAllCost(templateGroup.slots, weights)),
     ...contentGroups.map(() => 0),
   ]);
   return solveAssignment([...groupRows, ...dummyRows]).slice(0, contentGroups.length);
@@ -86,7 +88,7 @@ function match(ctx: MatchContext): MatchResult {
   const pairResults = contentGroups.map((contentGroup) =>
     templateGroups.map((templateGroup) => solveSubproblem(ctx, contentGroup.items, templateGroup.slots)),
   );
-  const partnerOf = pairGroups(contentGroups, templateGroups, pairResults);
+  const partnerOf = pairGroups(contentGroups, templateGroups, pairResults, ctx.weights);
 
   // 3) 짝지어진 그룹 쌍은 하위 문제 결과를 그대로 확정한다.
   //   그 안에서 버린 항목은 버림으로 확정(다른 카드로 새면 찢어진다), 비운 슬롯도 빈 채로 둔다(다른 그룹 항목이 섞인다).

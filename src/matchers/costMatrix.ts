@@ -37,10 +37,10 @@ export function buildCostMatrix(
   // 실제 항목 행: [실제 슬롯 열들, dummy 슬롯 열들]
   const itemRows = items.map((item) => [
     ...slots.map((slot) => cost(item, slot, ctx)),
-    ...items.map(() => DUMMY_SLOT_COST(item)),
+    ...items.map(() => DUMMY_SLOT_COST(item, ctx.weights)),
   ]);
   // dummy 항목 행: [실제 슬롯 열들, dummy 슬롯 열들(= 0)]
-  const dummyRows = slots.map(() => [...slots.map((slot) => DUMMY_ITEM_COST(slot)), ...items.map(() => 0)]);
+  const dummyRows = slots.map(() => [...slots.map((slot) => DUMMY_ITEM_COST(slot, ctx.weights)), ...items.map(() => 0)]);
   return [...itemRows, ...dummyRows];
 }
 

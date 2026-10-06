@@ -272,7 +272,7 @@ export type MatchContext = {
 - 하단에 status와 matcher 이름 표시
 
 ### 3.5 bench 지표
-결과는 `bench/results/YYYYMMDD-HHmm.md`에 저장한다. 미구현 matcher는 "-"로 표시한다.
+결과는 `bench/results/YYYYMMDD-HHmm.md`에 저장한다(가중치 민감도는 `sweep-YYYYMMDD-HHmm.md`, D-25). 미구현 matcher는 "-"로 표시한다.
 
 | 지표 | 정의 |
 |---|---|
@@ -281,7 +281,7 @@ export type MatchContext = {
 | p1Dropped | priority-1 유실 수 |
 | groupSplit | 그룹 찢어짐 수 |
 | status | accepted / degraded / rejected 개수 |
-| ms | 평균 실행 시간 |
+| ms | 쌍마다 워밍업 1회 뒤 21회 잰 중앙값의 평균 |
 
 ### 3.6 스크립트
 | 명령 | 동작 |
@@ -571,6 +571,7 @@ README 구성:
 | D-22 | status: error 남음 → rejected / error 0이고 warn ≥ 1 또는 fallback 1회 이상 → degraded / 그 밖 accepted (Claude 결정 — 🙋 사용자 위임, Step 4. D-9를 넓힘) | fallback도 degraded / warn만 degraded | 글자를 줄이거나 항목을 버린 결과는 사람이 한 번 봐야 한다. accepted는 「손대지 않고 그대로 써도 됨」만 뜻한다 |
 | D-23 | `FallbackStep.applies(v, ctx, r, adj)`로 인자를 늘림 (Claude 결정, Step 4) | 인자 추가 / 위반만 | 이미 minFontSize인 슬롯에 shrinkFont가 헛돌지 않으려면 현재 글자 크기를 봐야 한다 |
 | D-24 | 마지막에 동작 불변 가독성 리팩터링 (Claude 결정, 2026-10-05) | 리팩터링 / 그대로 | 사용자 요청. spec 3.4 계약 이름은 유지하고 내부 이름·함수 분리·중복 제거만 했다(MatchContext에 `slotsById` 추가, 행렬 이중 생성 제거, `costBreakdown` 삭제). bench(ms 제외)·SVG 전체·trace가 전후 글자 하나까지 같음을 diff로 확인. Hungarian 본체의 표준 표기(u, v, p, way, minv)는 주석과 짝이라 유지 |
+| D-25 | cost 가중치를 `Weights` 묶음으로 만들어 `MatchContext.weights`로 싣고 `buildContext`·`run`·`DUMMY_*_COST`가 선택 인자로 받는다. `pnpm bench:sweep`이 가중치 하나씩을 ×0.5·×2로 바꿔 99쌍을 다시 돌린다 (Claude 결정, 2026-10-06) | 인자로 주입 / 상수 그대로 두고 파일을 고쳐 실험 | 「가중치를 바꾸면 결과가 어떻게 달라지나」를 표 한 장으로 답하려고. 기본값은 그대로라 동작 불변(bench의 ms 외 숫자·SVG 297장 전후 동일). 3.3·3.4의 시그니처에 선택 인자가 하나씩 늘었다. 가중치 값 자체(D-14)는 건드리지 않았다 |
 
 ## 부록 C. 진행 상황
 
@@ -580,4 +581,5 @@ README 구성:
 - 위임 결정: 이번 세션에서 사용자가 🙋 판단을 Claude에게 위임했다. 부록 A의 분류와 D-10·D-13·D-14·D-19~D-22는 「Claude 결정 — 🙋 사용자 위임」이다. 사용자가 바꾸면 해당 줄과 README를 함께 고친다
 - 브랜치 메모: 이 저장소의 클라우드 세션은 지정 브랜치 하나에만 푸시할 수 있어, Step마다 로컬 `step-N-*` 브랜치를 `--no-ff`로 세션 브랜치 `claude/lucid-bell-n2rc8s`에 합쳐 Step 경계를 남겼다. `main` 병합(PR)은 사용자가 한다
 - 마무리(2026-10-05): README·가이드에 구조도 추가, 동작 불변 가독성 리팩터링(D-24). `pnpm test` 40 통과, typecheck 0, bench 숫자 변화 없음
-- 다음 할 일: 사용자가 위임 결정을 검토, `main`으로 병합, 설명 리허설. 남은 개선 거리는 F-8·F-9
+- 다듬기(2026-10-06, 브랜치 `step-6-polish`): 중간 bench 결과·Step 0 가이드 초안 삭제, bench ms를 중앙값으로, measure·cost·규칙 단위 테스트(테스트 40 → 85), 가중치 주입과 `pnpm bench:sweep`(D-25), GitHub Actions CI, README에 t04×c05 세 matcher 그림과 민감도 요약. 엔진 동작은 그대로(bench의 ms 외 숫자·SVG 전후 동일). Step 1~5는 PR #1로 `main`에 합침
+- 다음 할 일: 사용자가 위임 결정을 검토(부록 A 분류, D-10·D-13·D-14·D-19~D-22), 설명 리허설. 정책 결정이 필요한 개선: p2 버림·빈 슬롯이 accepted로 통과하는 문제, F-7(계층 매칭이 p1 제목을 버림), F-8, F-9. 그 뒤 가이드(`docs/guide/slotfit-guide.html`)를 새 테스트 수·ms·`weights` 인자·sweep·CI에 맞춰 갱신
