@@ -86,7 +86,7 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 <main>
 <header>
   <section>
-    <span class="eyebrow">SLOTFIT · STEP 0 → STEP 4</span>
+    <span class="eyebrow">SLOTFIT · STEP 0 → STEP 7</span>
     <h1>처음 읽는 사람을 위한 SlotFit 코드 가이드</h1>
     <p class="lead">콘텐츠를 디자인 템플릿의 빈칸에 배치하고, 그 결과를 써도 되는지 판정하는 엔진을 다섯 단계에 걸쳐 만들었습니다. 각 단계에서 무엇을 만들었는지, 코드를 어떤 순서로 읽으면 되는지, 핵심 함수가 작은 예시에서 한 줄씩 어떻게 움직이는지를 처음 보는 사람 기준으로 풀어 썼습니다.</p>
     <div class="note"><strong>읽는 법.</strong> 앞부분(Step 0)은 뼈대와 공통 개념입니다. 그 뒤 Step 1~4 장은 각각 「무엇을 왜 만들었나 → 읽을 파일 → 예시로 따라가기 → 결과」 순서입니다. Step 0 장의 숫자(테스트 8개, goldenMatch 0.40 등)는 Step 0이 끝났을 때의 값이고, 최종 값은 「마지막 수치」 장에 있습니다. Step 0 장의 코드 인용도 그때 모양입니다. 마지막에 읽기 좋게 다듬으면서 일부 이름이 바뀌었습니다(예: 규칙의 매개변수 <code>r</code> → <code>result</code>, 꾸러미에 <code>slotsById</code> 추가). 흐름과 뜻은 같습니다.</div>
@@ -104,6 +104,7 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
         <li><a href="#s2">Step 2 — cost와 Hungarian</a></li>
         <li><a href="#s3">Step 3 — 계층 매칭</a></li>
         <li><a href="#s4">Step 4 — 검사·대응·판정</a></li>
+        <li><a href="#s6">Step 6 · 7 — 도구와 판정 기준</a></li>
         <li><a href="#numbers">마지막 수치</a></li>
         <li><a href="#try">직접 돌려 보기</a></li>
         <li><a href="#decided">누가 무엇을 정했나</a></li>
@@ -169,7 +170,7 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
       <!-- 검사와 대응 -->
       <rect x="570" y="262" width="210" height="72" rx="6" fill="none" stroke="currentColor"/>
       <text x="675" y="292" text-anchor="middle" font-weight="600" fill="currentColor">validation/validate.ts</text>
-      <text x="675" y="312" text-anchor="middle" style="fill: var(--muted)">규칙 5개 → 위반 목록</text>
+      <text x="675" y="312" text-anchor="middle" style="fill: var(--muted)">규칙 7개 → 위반 목록</text>
       <line x1="675" y1="206" x2="675" y2="260" stroke="currentColor" marker-end="url(#arch-arrow)"/>
       <text x="683" y="238" font-size="11" style="fill: var(--muted)">MatchResult</text>
 
@@ -398,7 +399,7 @@ export type MatchResult = {
   <div class="read">
     <span class="depth">4 · 훑기</span>
     <h3>src/context.ts — 꾸러미 만들기</h3>
-    <p><code>buildContext(템플릿, 콘텐츠)</code>는 위에서 본 슬롯 목록과 소속 표, 그리고 「id로 콘텐츠 항목을 바로 찾는 표(<code>itemsById</code>)」를 묶어 <code>MatchContext</code>로 돌려줍니다. 이후의 모든 함수는 이 꾸러미 하나만 받습니다. 매처마다 트리를 다시 뒤지는 일을 막으려는 장치입니다.</p>
+    <p><code>buildContext(템플릿, 콘텐츠)</code>는 위에서 본 슬롯 목록과 소속 표, 그리고 「id로 콘텐츠 항목을 바로 찾는 표(<code>itemsById</code>)」를 묶어 <code>MatchContext</code>로 돌려줍니다. 이후의 모든 함수는 이 꾸러미 하나만 받습니다. 매처마다 트리를 다시 뒤지는 일을 막으려는 장치입니다. 지금은 점수 가중치 묶음(<code>weights</code>)도 이 꾸러미에 함께 실려 다닙니다(D-25, 아래 「Step 6 · 7」 장).</p>
   </div>
 
   <div class="read">
@@ -483,8 +484,8 @@ export type MatchResult = {
   severity: 'error' | 'warn';
   check(ctx, r, adj): Violation[];   // 위반을 찾아 목록으로 돌려줌. 없으면 빈 목록
 };</code></pre>
-    <p>규칙도 매처처럼 약속이 하나입니다. <code>validate.ts</code>는 규칙 다섯 개를 차례로 돌려 위반을 모으는 일만 합니다.</p>
-    <p><code>rules/overflow.ts</code>가 지금 유일하게 일하는 규칙입니다. 배치를 한 줄씩 보면서 다음을 합니다.</p>
+    <p>규칙도 매처처럼 약속이 하나입니다. <code>validate.ts</code>는 규칙을 차례로 돌려 위반을 모으는 일만 합니다. Step 0에는 규칙이 다섯 개였고 지금은 일곱 개입니다.</p>
+    <p>Step 0에서는 <code>rules/overflow.ts</code>만 실제로 일했습니다. 배치를 한 줄씩 보면서 다음을 합니다.</p>
     <ol>
       <li>빈 슬롯이면 건너뜁니다.</li>
       <li>글 칸에 글이 들어간 경우만 봅니다.</li>
@@ -492,7 +493,7 @@ export type MatchResult = {
       <li>안 들어가면 「줄 수 2/1, 높이 56/40」 같은 설명을 붙여 error 위반을 하나 만듭니다.</li>
     </ol>
     <p>3번에서 글자 크기는 <code>adj.fontSize[slot.id] ?? slot.fontSize</code>로 정합니다. 「조정된 크기가 있으면 그것을, 없으면 원래 크기를」이라는 뜻입니다. Step 4에서 글자 크기를 줄이는 대응이 생기면 이 줄 덕분에 줄어든 크기로 다시 검사하게 됩니다.</p>
-    <p>나머지 네 파일(<code>titleMissing</code>, <code>priorityDropped</code>, <code>groupSplit</code>, <code>roleMismatch</code>)은 항상 빈 목록을 돌려줍니다. 열어 보면 무엇을 검사할 예정인지 주석 한 줄이 있습니다.</p>
+    <p>나머지 네 파일(<code>titleMissing</code>, <code>priorityDropped</code>, <code>groupSplit</code>, <code>roleMismatch</code>)은 Step 0에서는 항상 빈 목록을 돌려줬고, Step 3 · 4에서 속을 채웠습니다.</p>
   </div>
 
   <div class="read">
@@ -514,7 +515,7 @@ export type MatchResult = {
 
   return { status: decideStatus(violations), /* … */ };
 }</code></pre>
-    <p>(읽기 쉽게 기록용 줄을 뺀 모양입니다.) 가운데 <code>for</code> 반복이 「위반이 있으면 고쳐 보고 다시 검사」하는 자리입니다. 대응 목록인 <code>POLICY</code>가 지금은 비어 있어서 첫 바퀴에서 바로 빠져나옵니다. 병원에 비유하면 검사 → 처방 → 재검사를 최대 다섯 번 되풀이하는 구조인데, 아직 처방전이 한 장도 없는 상태입니다.</p>
+    <p>(읽기 쉽게 기록용 줄을 뺀 Step 0 때의 모양입니다. 지금은 <code>run(t, c, matcher, weights)</code>처럼 넷째 인자로 가중치를 받을 수 있고, 넘기지 않으면 기본값을 씁니다.) 가운데 <code>for</code> 반복이 「위반이 있으면 고쳐 보고 다시 검사」하는 자리입니다. 대응 목록인 <code>POLICY</code>가 지금은 비어 있어서 첫 바퀴에서 바로 빠져나옵니다. 병원에 비유하면 검사 → 처방 → 재검사를 최대 다섯 번 되풀이하는 구조인데, 아직 처방전이 한 장도 없는 상태입니다.</p>
 <pre><code>function decideStatus(violations: Violation[]): Status {
   if (violations.some((v) =&gt; v.severity === 'error')) return 'rejected';
   if (violations.some((v) =&gt; v.severity === 'warn')) return 'degraded';
@@ -547,21 +548,26 @@ export type MatchResult = {
 
 <section id="tests">
   <h2>테스트가 지키는 것</h2>
-  <p>Step 0에는 테스트 파일이 세 개였고, 지금은 일곱 개, 테스트 40개입니다(<code>pnpm test</code>). 성격으로 나누면 세 갈래입니다.</p>
+  <p>Step 0에는 테스트 파일이 세 개였고, 지금은 열한 개, 테스트 102개입니다(<code>pnpm test</code>). 성격으로 나누면 네 갈래입니다.</p>
   <div class="scroll">
   <table>
     <thead><tr><th>파일</th><th>개수</th><th>지키는 것</th><th>생긴 Step</th></tr></thead>
     <tbody>
       <tr><td><code>invariants.test.ts</code></td><td>16</td><td>matcher 4개 × 늘 참이어야 하는 성질 4가지(아래)</td><td>0</td></tr>
       <tr><td><code>oracle.test.ts</code></td><td>5</td><td>Hungarian = 전수 탐색, <code>solveAssignment</code>가 무작위 행렬의 최솟값을 찾음, 금지 짝 비용이 충분히 큼</td><td>2</td></tr>
-      <tr><td><code>pipeline.test.ts</code></td><td>9</td><td>판정 경계 4가지, 긴 제목을 줄여 degraded, 거절이 맞는 두 쌍, fallback이 입력을 바꾸지 않음</td><td>4</td></tr>
-      <tr><td><code>hierarchical.test.ts</code></td><td>3</td><td>계층 매칭은 카드를 안 찢고 Hungarian은 찢음, t09×c09 반례가 그대로임</td><td>3</td></tr>
+      <tr><td><code>pipeline.test.ts</code></td><td>13</td><td>판정 경계 4가지, 긴 제목을 줄여 degraded, 거절이 맞는 두 쌍, fallback이 입력을 바꾸지 않음, Hungarian에서도 버리기 단계가 도는 입력, 찢어진 카드의 항목은 버리지 않음</td><td>4, 6, 7</td></tr>
+      <tr><td><code>hierarchical.test.ts</code></td><td>6</td><td>계층 매칭은 카드를 안 찢고 Hungarian은 찢음, t09×c09에서 제목을 지킴, flat 해가 카드를 찢으면 물러나지 않음</td><td>3, 7</td></tr>
       <tr><td><code>golden.test.ts</code></td><td>3</td><td>정답 비교(D-7): 그대로 5/5, 통째로 바꿔도 5/5, 섞이면 3/5</td><td>1</td></tr>
       <tr><td><code>smoke.test.ts</code></td><td>2</td><td>greedy가 끝까지 돌고, 제목 칸에 「무료배송」이 들어가는 의도된 실패가 그대로임</td><td>0</td></tr>
       <tr><td><code>schema.test.ts</code></td><td>2</td><td>모든 fixture가 스키마를 통과하고, 잘못된 입력은 막힘</td><td>0</td></tr>
+      <tr><td><code>measure.test.ts</code></td><td>9</td><td>줄 수 어림: 「3만원 이상…」 301px → 2줄 같은 손 계산 값, 줄 수 경계와 높이 경계</td><td>6</td></tr>
+      <tr><td><code>cost.test.ts</code></td><td>15</td><td>점수의 네 항을 하나씩: 역할, 넘침, 너무 짧음, 순서. 버림·비움 비용</td><td>6</td></tr>
+      <tr><td><code>rules.test.ts</code></td><td>25</td><td>규칙 일곱 개마다 「위반 없음」과 「위반 있음」</td><td>6, 7</td></tr>
+      <tr><td><code>grouping.test.ts</code></td><td>6</td><td>찢어진 카드를 찾는 함수 <code>findSplitGroups</code></td><td>7</td></tr>
     </tbody>
   </table>
   </div>
+  <p>아래 세 갈래에 더해, Step 6에서 넷째 갈래인 <strong>단위 테스트</strong>(measure · cost · rules · grouping)를 넣었습니다. 함수 하나에 작은 입력을 주고 손으로 계산한 값과 비교합니다. fixture를 통째로 돌리는 테스트는 「어딘가 틀렸다」만 알려 주지만, 단위 테스트는 어느 함수가 틀렸는지 바로 짚어 줍니다.</p>
   <h3>invariant — 어떤 입력에서도 깨지면 안 되는 약속</h3>
   <p>배치가 좋은지 나쁜지와 상관없이, 배치라면 반드시 지켜야 하는 네 가지입니다. 데이터베이스의 제약조건과 같은 성격입니다.</p>
   <ol>
@@ -574,7 +580,7 @@ export type MatchResult = {
   <h3>oracle — 느리지만 틀릴 수 없는 답과 비교</h3>
   <p>Hungarian이 맞는지는 같은 문제를 모든 경우를 시도해 푸는 bruteForce와 점수 합(totalCost)을 비교해 확인합니다. 배치는 동점이면 달라도 되므로 점수만 비교합니다. 자세한 내용은 Step 2 장에 있습니다.</p>
   <h3>고정 — 알려진 결과가 바뀌면 알려 주기</h3>
-  <p>smoke, golden, hierarchical, pipeline 테스트는 「이 fixture에서는 이 결과가 나와야 한다」를 고정합니다. 일부러 틀린 결과(greedy의 「무료배송」)나 알려진 한계(t09×c09)도 고정해 둡니다. 누가 코드를 바꿔 이야기의 출발점이나 한계가 조용히 달라지면 테스트가 깨져서 알 수 있습니다. 기획서는 테스트를 invariant와 oracle 두 종류만 두기로 했는데, 이 셋은 핵심 수치를 지키려고 작게 더한 것입니다.</p>
+  <p>smoke, golden, hierarchical, pipeline 테스트는 「이 fixture에서는 이 결과가 나와야 한다」를 고정합니다. 일부러 틀린 결과(greedy의 「무료배송」)나 고친 뒤의 결과(t09×c09에서 제목을 지킴)도 고정해 둡니다. 누가 코드를 바꿔 이야기의 출발점이나 고친 결과가 조용히 달라지면 테스트가 깨져서 알 수 있습니다. 기획서는 테스트를 invariant와 oracle 두 종류만 두기로 했는데, 이 셋은 핵심 수치를 지키려고 작게 더한 것입니다.</p>
   <div class="note"><strong>invariant와 validation 규칙의 차이.</strong> invariant는 코드에 버그가 없다면 절대 깨지지 않는 약속이고, 깨지면 프로그램을 고쳐야 합니다. validation 규칙은 입력에 따라 깨질 수 있는 품질 기준이고, 깨지면 결과물을 고치거나 거절합니다. 예상 질문 목록에도 있는 구분입니다.</div>
 </section>
 
@@ -705,7 +711,7 @@ body-menu → body1  : role 0              + 넘침 0 + 짧음 3.34 + 순서 0.1
 body-menu → body2  : role 0              + 넘침 0 + 짧음 3.34 + 순서 1.69 =  5.03
 body-menu → 버림   : priority 2                                          = 30</code></pre>
     <p>순서 항 계산: 신메뉴는 항목 5개(제목 포함) 중 두 번째(인덱스 1)라 상대 위치가 1/4 = 0.25입니다. body1은 칸 3개 중 인덱스 1이라 0.5, body2는 1.0입니다. (0.25 − 0.5)² × 3 = 0.19, (0.25 − 1)² × 3 = 1.69.</p>
-    <div class="note"><strong>절댓값이 아니라 제곱인 이유 (D-16).</strong> 처음에는 위치 차이의 절댓값을 썼습니다. 그러자 t02×c02에서 「신메뉴→body1, 할인→body2」(|0.25−0.5| + |0.5−1| = 0.75)와 거꾸로 놓은 배치(|0.25−1| + |0.5−0.5| = 0.75)가 똑같은 점수가 되어 순서가 뒤집혔습니다. 제곱으로 바꾸면 0.0625+0.25 = 0.31 대 0.5625+0 = 0.56이라 바른 순서가 이깁니다. 제곱처럼 아래로 볼록한 함수에서는 두 짝을 엇갈리게 놓는 쪽이 항상 더 비쌉니다. 진짜 「순서가 뒤집힌 쌍의 수」는 두 짝을 함께 봐야 정해지므로 짝 하나의 점수로는 만들 수 없고, 그래서 이렇게 근사했습니다.</div>
+    <div class="note"><strong>절댓값 대신 제곱을 쓴 이유 (D-16).</strong> 처음에는 위치 차이의 절댓값을 썼습니다. 그러자 t02×c02에서 「신메뉴→body1, 할인→body2」(|0.25−0.5| + |0.5−1| = 0.75)와 거꾸로 놓은 배치(|0.25−1| + |0.5−0.5| = 0.75)가 똑같은 점수가 되어 순서가 뒤집혔습니다. 제곱으로 바꾸면 0.0625+0.25 = 0.31 대 0.5625+0 = 0.56이라 바른 순서가 이깁니다. 제곱처럼 아래로 볼록한 함수에서는 두 짝을 엇갈리게 놓는 쪽이 항상 더 비쌉니다. 진짜 「순서가 뒤집힌 쌍의 수」는 두 짝을 함께 봐야 정해지므로 짝 하나의 점수로는 만들 수 없고, 그래서 이렇게 근사했습니다.</div>
   </div>
 
   <div class="read">
@@ -774,12 +780,13 @@ b            3        10        10
 
   <div class="read">
     <span class="depth">정독 · 가장 중요</span>
-    <h3>src/matchers/hierarchical.ts — match()의 네 단계</h3>
+    <h3>src/matchers/hierarchical.ts — match()의 다섯 단계</h3>
     <ol>
       <li><strong>카드끼리의 비용표.</strong> 콘텐츠 카드(같은 groupId 묶음) g와 템플릿 카드 h마다 <code>solveSubproblem(ctx, g의 항목들, h의 칸들)</code>(hungarian.ts)로 안쪽을 Hungarian으로 풀고, 그 최소 비용을 표에 적습니다.</li>
       <li><strong>카드끼리 Hungarian.</strong> 그 표로 카드 짝을 정합니다. 짝 없는 콘텐츠 카드는 「항목 전부 버림」 비용, 짝 없는 템플릿 카드는 「칸 전부 비움」 비용입니다.</li>
       <li><strong>카드 안 확정.</strong> 짝지어진 카드는 1단계에서 푼 안쪽 결과를 그대로 씁니다. 안에서 버린 항목이 다른 카드로 새지 않게 합니다.</li>
       <li><strong>나머지.</strong> 카드에 속하지 않은 항목(제목 등)과 짝을 못 찾은 카드의 항목을, 카드 밖 칸과 짝 없는 카드의 칸에 flat Hungarian으로 넣습니다.</li>
+      <li><strong>priority 1을 잃었으면 물러나기 (D-28).</strong> 1~4단계의 결과가 priority 1 항목을 버렸을 때만, 전체를 한 번에 푸는 flat 해(Hungarian과 같은 답)를 구해 봅니다. flat 해가 priority 1을 더 적게 버리고 카드를 하나도 찢지 않으면 그쪽을 내고, 아니면 1~4단계의 결과를 그대로 냅니다. 아래 「전역 최적이 아닌 경우」에서 예시로 따라갑니다.</li>
     </ol>
     <p>t04×c05의 1단계 표입니다(실제 계산값).</p>
 <pre><code>            card1   card2   card3
@@ -864,27 +871,30 @@ p3 카드      7.65    6.43    7.20
   p1: 사진 → card3, 이름 → card1, 설명 → card1   소속 {card1, card3} → 위반
   p2: 사진 → card2, 이름 → card2, 설명 → card2   소속 {card2}        → 통과
   p3: 사진 → card1, 이름 → card3, 설명 → card3   소속 {card1, card3} → 위반</code></pre>
-    <p>bench의 groupSplit 열이 이 위반 수의 합입니다. 99쌍 전체에서 greedy 9, hungarian 6, hierarchical <strong>0</strong>입니다. hierarchical이 0인 것은 운이 아니라 구조 때문입니다. 3단계에서 카드 항목이 카드 밖으로 나갈 길을 막았기 때문입니다.</p>
+    <p>bench의 groupSplit 열이 이 위반 수의 합입니다. 99쌍 전체에서 greedy 10, hungarian 6, hierarchical <strong>0</strong>입니다. hierarchical의 0은 구조에서 나옵니다. 3단계가 카드 항목이 카드 밖으로 나갈 길을 막고, 5단계는 카드를 찢는 flat 해로는 물러나지 않습니다. 「찢어졌는가」를 판정하는 코드는 <code>src/grouping.ts</code>의 <code>findSplitGroups()</code> 하나이고, 이 규칙과 5단계, 그리고 Step 7의 버리기 단계가 함께 씁니다.</p>
   </div>
 
-  <h3>전역 최적이 아닌 경우 (F-7)</h3>
+  <h3>전역 최적이 아닌 경우 (F-7)와 5단계</h3>
   <p>계층 매칭은 단계를 나눈 대가로 「전체 합이 가장 작은 배치」를 놓칠 수 있습니다. 반례로 일부러 fixture를 하나 만들었습니다. 카드 한 장(소제목, 설명)뿐인 템플릿 t09에 「제목(p1) + 카드 한 장」 콘텐츠 c09를 넣습니다.</p>
   <div class="scroll">
   <table>
-    <thead><tr><th>matcher</th><th>card-sub</th><th>card-body</th><th>버림</th><th>totalCost</th></tr></thead>
+    <thead><tr><th>풀이</th><th>card-sub</th><th>card-body</th><th>버림</th><th>totalCost</th></tr></thead>
     <tbody>
-      <tr><td>hungarian</td><td>겨울 특가 (제목)</td><td>핫초코 1+1 설명</td><td>핫초코 (p2)</td><td>56.55</td></tr>
-      <tr><td>hierarchical</td><td>핫초코</td><td>핫초코 1+1 설명</td><td><strong>겨울 특가 (p1)</strong></td><td>1007.54</td></tr>
+      <tr><td>hungarian (flat)</td><td>겨울 특가 (제목)</td><td>핫초코 1+1 설명</td><td>핫초코 (p2)</td><td>56.55</td></tr>
+      <tr><td>hierarchical 1~4단계만</td><td>핫초코</td><td>핫초코 1+1 설명</td><td><strong>겨울 특가 (p1)</strong></td><td>1007.54</td></tr>
+      <tr><td>hierarchical 5단계까지</td><td>겨울 특가 (제목)</td><td>핫초코 1+1 설명</td><td>핫초코 (p2)</td><td>56.55</td></tr>
     </tbody>
   </table>
   </div>
-  <p>2단계에서 카드 짝을 정할 때는 「제목이 갈 곳이 남는가」를 보지 않습니다. 카드가 칸 두 개를 다 가져가고, 4단계에서 제목은 갈 곳이 없어 버려집니다. 이 결정의 이유(D-19)는 이렇게 정리했습니다. 카드가 찢어졌는지는 두 짝을 함께 봐야 알 수 있어 짝별 점수로는 표현할 수 없습니다. 계층 매칭은 빠르고 단계마다 손으로 설명할 수 있습니다. 그리고 이런 실패는 「priority 1 유실」로 드러나므로 Step 4의 검사가 거절로 잡을 수 있습니다. 섞인 카드라는 틀린 정보를 내보내는 것보다, 드물게 거절하는 편이 낫다고 판단했습니다.</p>
+  <p>2단계에서 카드 짝을 정할 때는 「제목이 갈 곳이 남는가」를 보지 않습니다. 카드가 칸 두 개를 다 가져가고, 4단계에서 제목은 갈 곳이 없어 버려집니다. Step 3 · 4 때는 이 결과를 그대로 두고 priority 1 유실 error로 거절했습니다(t09 템플릿 3쌍).</p>
+  <p>Step 7에서 5단계를 넣었습니다(D-28). 1~4단계가 priority 1을 버렸으니 flat 해를 구해 봅니다. flat 해는 제목을 지키고(p1 유실 0 &lt; 1), 카드 항목은 설명 하나만 배치되어 찢어질 것이 없습니다. 두 조건이 다 맞으므로 flat 해를 냅니다. 세 쌍은 rejected에서 degraded로 바뀌었습니다. 소제목(p2)을 버렸고 제목이 소제목 칸에 들어갔기 때문에 accepted는 아닙니다.</p>
+  <p>5단계는 priority 1을 잃을 때만 움직입니다. priority 2 · 3만 손해 보는 비최적은 그대로 남고, flat 해가 카드를 찢으면 물러나지 않습니다. 그래서 「전역 최적은 아니지만 카드는 찢지 않는다」는 성질은 그대로입니다. 계층 매칭을 고른 이유(D-19)도 그대로입니다. 카드가 찢어졌는지는 두 짝을 함께 봐야 알 수 있어 짝별 점수로는 표현할 수 없고, 계층 매칭은 빠르며 단계마다 손으로 설명할 수 있습니다.</p>
 </section>
 
 <section id="s4">
   <span class="eyebrow">STEP 4 · VALIDATION + FALLBACK</span>
   <h2>Step 4 — 검사하고, 고쳐 보고, 안 되면 거절하기</h2>
-  <h3>규칙 다섯 개와 등급 (D-20)</h3>
+  <h3>규칙 일곱 개와 등급 (D-20, D-26, D-27)</h3>
   <div class="scroll">
   <table>
     <thead><tr><th>규칙</th><th>잡는 것</th><th>등급</th></tr></thead>
@@ -894,6 +904,8 @@ p3 카드      7.65    6.43    7.20
       <tr><td><code>priorityDropped</code></td><td>priority 1 항목이 버려짐</td><td><span class="tag err">error</span></td></tr>
       <tr><td><code>groupSplit</code></td><td>한 카드의 항목이 여러 카드로 흩어짐</td><td><span class="tag err">error</span></td></tr>
       <tr><td><code>roleMismatch</code></td><td>roleHint와 칸의 역할이 다름(힌트 없으면 검사 안 함)</td><td><span class="tag warn">warn</span></td></tr>
+      <tr><td><code>contentDropped</code></td><td>priority 2 항목이 버려짐 (Step 7)</td><td><span class="tag warn">warn</span></td></tr>
+      <tr><td><code>emptySlot</code></td><td>제목이 아닌 칸이 비어 있음 (Step 7)</td><td><span class="tag warn">warn</span></td></tr>
     </tbody>
   </table>
   </div>
@@ -904,7 +916,7 @@ p3 카드      7.65    6.43    7.20
     <h3>src/fallback/steps/ — 대응 두 단계 (D-21)</h3>
     <ol>
       <li><strong>shrinkFont.</strong> 넘친 칸의 글자 크기를 1px씩 내려 들어가는 가장 큰 크기를 찾습니다. minFontSize 아래로는 내리지 않습니다. 정보를 잃지 않으므로 먼저 합니다.</li>
-      <li><strong>dropLowPriority.</strong> 줄여도 넘치면 넘친 항목 중 priority 3을 먼저, 그다음 2를 하나 버립니다. priority 1은 절대 버리지 않습니다.</li>
+      <li><strong>dropLowPriority.</strong> 줄여도 넘치면 넘친 항목 중 priority 3을 먼저, 그다음 2를 하나 버립니다. priority 1은 절대 버리지 않습니다. 찢어진 카드에 속한 항목도 버리지 않습니다(D-29, 아래 F-8).</li>
     </ol>
     <p>두 단계 모두 입력을 고치지 않고 새 결과와 새 <code>adjustments</code>를 돌려줍니다. 계약도 조금 바꿨습니다. <code>applies(위반, ctx, 결과, 조정값)</code>처럼 현재 글자 크기를 볼 수 있게 해서, 이미 최소 크기인 칸에 shrinkFont가 헛도는 일을 막았습니다(D-23).</p>
   </div>
@@ -946,14 +958,51 @@ fallback: 적용할 단계 없음          ← warn은 대응 대상이 아님
   <h3>거절이 맞는 경우</h3>
   <ul>
     <li><strong>c10 (본문 12개, 전부 priority 1).</strong> 어떤 템플릿에도 다 들어가지 않으므로 9개 템플릿 모두에서 <span class="tag err">rejected</span>가 맞습니다. 남는 error는 모두 priorityDropped입니다.</li>
-    <li><strong>c11 (153자 고지문, priority 1).</strong> 작은 칸에서는 minFontSize까지 줄여도 넘치고, priority 1이라 버릴 수도 없습니다. 6개 템플릿에서 rejected, 칸이 큰 템플릿에서는 줄여서 degraded이거나 그대로 accepted입니다.</li>
+    <li><strong>c11 (153자 고지문, priority 1).</strong> 작은 칸에서는 minFontSize까지 줄여도 넘치고, priority 1이라 버릴 수도 없습니다. 6개 템플릿에서 rejected입니다. 칸이 큰 템플릿 3개에서는 들어가지만, 빈 칸이 남거나 글자를 줄였기 때문에 degraded입니다.</li>
   </ul>
 
   <h3>새로 발견한 한계</h3>
   <ul>
-    <li><strong>F-8 버림이 찢어짐을 가림.</strong> greedy t01×c01에서 카드를 찢은 설명이 넘쳐 dropLowPriority가 그것을 버리자, 넘침과 함께 groupSplit error도 사라져 rejected가 degraded로 바뀌었습니다. 대응이 문제를 「고친」 것이 아니라 「안 보이게」 한 경우입니다.</li>
-    <li><strong>F-9 긴 본문이 소제목 칸으로.</strong> 넘침을 줄 수로 매기다 보니, 아주 긴 글은 좁은 본문 칸(넘치는 줄 약 11개)보다 넓은 소제목 칸(약 6줄 + role 20)이 더 싸게 계산됩니다. 결과는 어차피 거절이라 그대로 두었습니다.</li>
+    <li><strong>F-8 버림이 찢어짐을 가림 → Step 7에서 고침.</strong> greedy t01×c01에서 카드를 찢은 설명이 넘쳐 dropLowPriority가 그것을 버리자, 넘침과 함께 groupSplit error도 사라져 rejected가 degraded로 바뀌었습니다. 문제를 고친 것처럼 보이지만 실제로는 안 보이게 한 경우입니다. 지금은 찢어진 카드의 항목을 버림 후보에서 빼므로(D-29) 넘침과 찢어짐 error가 둘 다 남아 rejected입니다.</li>
+    <li><strong>F-9 긴 본문이 소제목 칸으로 → 그대로 둠.</strong> 넘침을 줄 수로 매기다 보니, 아주 긴 글은 좁은 본문 칸(넘치는 줄 약 11개)보다 넓은 소제목 칸(약 6줄 + role 20)이 더 싸게 계산됩니다. 결과는 어차피 거절이고, 넘침 줄당 비용은 절반 · 두 배로 바꿔도 99쌍 중 0~1쌍만 달라져서 고치지 않았습니다(D-30).</li>
   </ul>
+</section>
+
+<section id="s6">
+  <span class="eyebrow">STEP 6 · 7 · 도구와 판정 기준</span>
+  <h2>Step 6 · 7 — 도구를 더하고 판정의 구멍을 메우기</h2>
+  <h3>Step 6: 동작은 그대로, 볼 수 있는 것만 늘리기</h3>
+  <ul>
+    <li><strong>단위 테스트.</strong> 위 「테스트가 지키는 것」의 넷째 갈래입니다.</li>
+    <li><strong>가중치를 인자로 (D-25).</strong> 점수에 쓰는 숫자들을 <code>Weights</code>라는 묶음 하나로 만들고 꾸러미(<code>ctx.weights</code>)에 실었습니다. <code>cost()</code>는 상수 대신 이 묶음을 읽습니다. 기본값(<code>DEFAULT_WEIGHTS</code>)은 예전 숫자 그대로라 결과는 바뀌지 않습니다.</li>
+    <li><strong><code>pnpm bench:sweep</code>.</strong> 가중치 하나만 절반 또는 두 배로 바꾸고 99쌍을 다시 돌려, 배치가 달라진 쌍을 셉니다. 「이 숫자를 바꾸면 어떻게 되나」에 표로 답하는 도구입니다.</li>
+    <li><strong>bench의 ms.</strong> 한 번 잰 값은 돌릴 때마다 흔들려서, 쌍마다 21번 재고 가운데 값(중앙값)을 씁니다.</li>
+    <li><strong>CI.</strong> GitHub에 올릴 때마다 <code>.github/workflows/ci.yml</code>이 타입 검사와 테스트를 자동으로 돌립니다.</li>
+  </ul>
+  <p>sweep 결과에서 볼 것은 세 가지입니다.</p>
+  <ul>
+    <li>가장 민감한 숫자는 역할 불일치 벌점(20)입니다. 절반 · 두 배로 바꾸면 두 matcher 합쳐 85번 배치가 달라집니다. 그다음이 priority 3 버림 비용(45), 본문 칸 비움 비용(38)입니다.</li>
+    <li>priority 1 버림 비용(1000)과 제목 칸 비움 비용(50)은 바꿔도 한 쌍도 달라지지 않습니다. 이미 다른 숫자보다 충분히 커서 순위가 뒤집히지 않기 때문입니다.</li>
+    <li>hierarchical은 26가지 변형 전부에서 groupSplit 0, goldenMatch 0.89~0.93입니다. hungarian은 0.75~0.82, groupSplit 4~8로 흔들립니다. 카드를 지키는 일을 점수에 맡기지 않고 구조로 막은 효과입니다.</li>
+  </ul>
+  <h3>Step 7: accepted가 뜻대로 읽히게 하기</h3>
+  <p>Step 4까지의 판정에는 구멍이 있었습니다. accepted는 「손대지 않고 그대로 써도 됨」이라는 뜻인데(D-22), 실제로는 이런 결과가 accepted였습니다.</p>
+  <ul>
+    <li>t02×c05: 콘텐츠 8개 중 7개를 버림. 규칙이 priority 1 유실만 봤습니다.</li>
+    <li>t04×c01: 10칸 중 5칸이 빔. 빈 칸 규칙이 제목 칸용 하나뿐이었습니다.</li>
+  </ul>
+  <p>그래서 warn 규칙 두 개를 더했습니다.</p>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>규칙</th><th>위반으로 보는 것</th><th>보지 않는 것</th></tr></thead>
+    <tbody>
+      <tr><td><code>contentDropped</code> (D-26)</td><td>버려진 priority 2 항목마다 1개</td><td>priority 3은 「있으면 좋은 것」이라 버려도 조용합니다. priority 1은 기존 error 규칙이 봅니다.</td></tr>
+      <tr><td><code>emptySlot</code> (D-27)</td><td>제목이 아닌 빈 칸마다 1개</td><td>제목 칸은 기존 error 규칙이 봅니다. 「몇 칸부터」 같은 기준 숫자는 두지 않았습니다.</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>이 두 규칙은 배치를 하나도 바꾸지 않습니다. 같은 배치에 「사람이 한 번 봐야 함」 딱지를 더 붙일 뿐입니다. 그 결과 accepted가 크게 줄었습니다(아래 「마지막 수치」). 99쌍은 템플릿 9개와 콘텐츠 11개를 전부 엇갈려 짝지은 것이라, 칸 수와 항목 수가 딱 맞는 쌍이 원래 드뭅니다.</p>
+  <p>나머지 둘은 위에서 본 것입니다. 계층 매칭의 5단계(D-28, Step 3 장)와 찢어진 카드의 항목을 버리지 않는 것(D-29, 바로 위 F-8)입니다.</p>
 </section>
 
 <section id="numbers">
@@ -963,26 +1012,34 @@ fallback: 적용할 단계 없음          ← warn은 대응 대상이 아님
   <table>
     <thead><tr><th>matcher</th><th>goldenMatch</th><th>groupSplit</th><th>status (합격/흠/거절)</th><th>ms</th></tr></thead>
     <tbody>
-      <tr><td>greedy</td><td>0.43</td><td>9</td><td>9 / 56 / 34</td><td>0.1</td></tr>
-      <tr><td>hungarian</td><td>0.75</td><td>6</td><td>39 / 40 / 20</td><td>0.3</td></tr>
-      <tr><td>hierarchical</td><td><strong>0.89</strong></td><td><strong>0</strong></td><td><strong>43 / 38 / 18</strong></td><td>0.2</td></tr>
+      <tr><td>greedy</td><td>0.43</td><td>10</td><td>1 / 63 / 35</td><td>0.015</td></tr>
+      <tr><td>hungarian</td><td>0.75</td><td>6</td><td>3 / 76 / 20</td><td>0.043</td></tr>
+      <tr><td>hierarchical</td><td><strong>0.89</strong></td><td><strong>0</strong></td><td><strong>4 / 80 / 15</strong></td><td>0.047</td></tr>
     </tbody>
   </table>
   </div>
-  <p>hierarchical의 거절 18쌍은 c10 9쌍(자리 부족), c11 6쌍(줄여도 넘침), t09 3쌍(F-7)입니다. 앞의 둘은 「거절이 맞는」 경우이고, 마지막은 계층 매칭이 감수한 한계입니다. 남은 golden 오답은 거의 다 t05×c04(roleHint 없음, 2/5)에서 나옵니다. 힌트가 없으면 길이와 순서만으로는 「토요 산책 모임」이 제목이고 「참가비 없음」이 캡션이라는 것을 알기 어렵습니다(D-8의 대가).</p>
+  <p>Step 4가 끝났을 때의 status는 greedy 9 / 56 / 34, hungarian 39 / 40 / 20, hierarchical 43 / 38 / 18이었습니다. Step 7에서 달라진 곳은 셋입니다.</p>
+  <ul>
+    <li><strong>합격이 43쌍에서 4쌍으로.</strong> 버린 priority 2 항목과 빈 칸에 warn이 붙어 degraded로 내려갔습니다. 남은 4쌍(t01×c01, t02×c02, t02×c04, t04×c05)은 빈 칸이 없고, 버렸다면 priority 3만 버린 결과입니다.</li>
+    <li><strong>hierarchical의 거절이 18쌍에서 15쌍으로.</strong> t09 템플릿 3쌍이 5단계 덕분에 제목을 지켜 degraded가 됐습니다. 남은 15쌍은 c10 9쌍(자리 부족)과 c11 6쌍(줄여도 넘침)이고, 모두 「거절이 맞는」 경우입니다.</li>
+    <li><strong>greedy의 거절이 34쌍에서 35쌍으로, groupSplit이 9에서 10으로.</strong> t01×c01에서 버림이 가리던 카드 찢어짐이 다시 드러났습니다(F-8).</li>
+  </ul>
+  <p>status만 보면 hungarian(3 / 76 / 20)과 hierarchical(4 / 80 / 15)의 차이가 작아 보입니다. 두 방식의 차이는 goldenMatch(0.75 대 0.89)와 groupSplit(6 대 0), 그리고 거절 수에서 읽어야 합니다. 남은 golden 오답은 거의 다 t05×c04(roleHint 없음, 2/5)에서 나옵니다. 힌트가 없으면 길이와 순서만으로는 「토요 산책 모임」이 제목이고 「참가비 없음」이 캡션이라는 것을 알기 어렵습니다(D-8의 대가).</p>
+  <p>ms는 쌍마다 21번 잰 중앙값의 평균입니다. hierarchical이 hungarian보다 조금 느린 것은 priority 1을 버린 쌍에서 flat 풀이를 한 번 더 하기 때문입니다.</p>
 </section>
 
 <section id="try">
   <h2>직접 돌려 보기</h2>
   <p>저장소 폴더에서 아래 명령을 차례로 쳐 보면 이 문서의 내용을 눈으로 확인할 수 있습니다.</p>
 <pre><code>pnpm install
-pnpm test                 # 테스트 40개
+pnpm test                 # 테스트 102개
 pnpm render t04-product-cards-3 c05-product-launch hungarian
 pnpm render t04-product-cards-3 c05-product-launch hierarchical
 pnpm render t02-notice-two-body c03-long-title hierarchical   # trace에 shrinkFont가 보임
 pnpm render:all           # 모든 쌍의 그림을 out/에
-pnpm bench                # 최종 비교표</code></pre>
-  <p>손을 대 보면 이해가 빨라지는 실험입니다. 끝나면 <code>git checkout .</code>으로 되돌리면 됩니다.</p>
+pnpm bench                # 최종 비교표
+pnpm bench:sweep          # 가중치를 하나씩 절반·두 배로 바꿔 비교</code></pre>
+  <p>손을 대 보면 이해가 빨라지는 실험입니다. 가중치를 바꾸는 실험은 <code>pnpm bench:sweep</code>이 표로 한꺼번에 해 주지만, 한 쌍의 그림이 어떻게 바뀌는지는 직접 고쳐서 render 해 보는 편이 잘 보입니다. 끝나면 <code>git checkout .</code>으로 되돌리면 됩니다.</p>
   <ul>
     <li><strong>순서 점수를 끄기.</strong> <code>src/scoring/weights.ts</code>의 <code>ORDER_COST</code>를 0으로 바꾸고 bench를 돌립니다. t02×c02의 본문 순서가 흔들리고, t04×c05에서 Hungarian이 고르는 카드 배치가 달라집니다.</li>
     <li><strong>priority 2를 싸게 버리기.</strong> 버림 비용 p2를 30에서 15로 낮추면, t08×c07에서 Hungarian이 기간·본문을 캡션 칸에 억지로 넣는 대신 버리기 시작합니다(F-6).</li>
@@ -1019,11 +1076,15 @@ pnpm bench                # 최종 비교표</code></pre>
       <tr><td>D-20</td><td>규칙별 등급</td><td>status 분포</td></tr>
       <tr><td>D-21</td><td>fallback 순서와 허용 범위</td><td>degraded/rejected 경계에 있는 쌍</td></tr>
       <tr><td>D-22</td><td>accepted/degraded/rejected 경계</td><td>status 분포</td></tr>
+      <tr><td>D-26, D-27</td><td>priority 2 유실과 제목 아닌 빈 칸을 warn으로</td><td>accepted 수 (43 → 4)</td></tr>
+      <tr><td>D-28</td><td>계층 매칭이 priority 1을 잃으면 카드를 찢지 않는 flat 해로 물러남</td><td>t09 템플릿 3쌍</td></tr>
+      <tr><td>D-29</td><td>찢어진 카드의 항목은 버리지 않음</td><td>greedy t01×c01</td></tr>
+      <tr><td>D-30</td><td>F-9(넘침을 줄 수로 매김)는 고치지 않음</td><td>t05×c11의 배치</td></tr>
     </tbody>
   </table>
   </div>
   <h3>Claude가 정한 기술적 선택</h3>
-  <p>D-1 ~ D-5(텍스트 근사, 줄 수 계산, 미구현 표시, 엄격한 스키마), D-11(카드 모양 기준), D-12(쌍별 표), D-15(금지 짝을 큰 유한값으로), D-16(순서 점수를 위치 차이의 제곱으로), D-17(bruteForce는 테스트 전용), D-18(계층 매칭 세부), D-23(fallback 계약 변경)입니다.</p>
+  <p>D-1 ~ D-5(텍스트 근사, 줄 수 계산, 미구현 표시, 엄격한 스키마), D-11(카드 모양 기준), D-12(쌍별 표), D-15(금지 짝을 큰 유한값으로), D-16(순서 점수를 위치 차이의 제곱으로), D-17(bruteForce는 테스트 전용), D-18(계층 매칭 세부), D-23(fallback 계약 변경), D-24(가독성 리팩터링), D-25(가중치를 인자로, sweep)입니다.</p>
 </section>
 
 <section id="interview">
@@ -1033,17 +1094,17 @@ pnpm bench                # 최종 비교표</code></pre>
     <li><code>run()</code> — <code>src/pipeline.ts</code>. 전체 흐름. 이제 fallback 반복이 실제로 돕니다.</li>
     <li><code>cost()</code> — <code>src/scoring/cost.ts</code>. 네 벌점 함수(<code>roleCost</code>·<code>overflowCost</code>·<code>underfillCost</code>·<code>orderCost</code>)를 더하는 곳입니다. 위의 「신메뉴」 계산을 손으로 다시 해 봅니다.</li>
     <li><code>solveAssignment()</code> — <code>src/matchers/hungarian.ts</code>. 3×3 표의 기록을 옆에 두고 따라갑니다.</li>
-    <li><code>match()</code>와 <code>pairGroups()</code> — <code>src/matchers/hierarchical.ts</code>. t04×c05의 카드 비용표로 1~4단계를 따라갑니다.</li>
+    <li><code>match()</code>와 <code>pairGroups()</code> — <code>src/matchers/hierarchical.ts</code>. t04×c05의 카드 비용표로 1~4단계를, t09×c09로 5단계를 따라갑니다.</li>
     <li><code>decideStatus()</code>와 fallback 두 단계 — <code>src/pipeline.ts</code>, <code>src/fallback/steps/</code>.</li>
   </ol>
   <h3>예상 질문과 답의 뼈대</h3>
   <p><strong>「greedy가 왜 부족했나요?」</strong> 입력 순서와 칸 순서만 봐서, 제목이 세 번째로 들어오면 제목 칸에 소제목이 들어갑니다. golden 0.43.</p>
-  <p><strong>「cost 가중치는 어떻게 정했고, 바꾸면 어떻게 되나요?」</strong> 「p1 보존 ≫ 제목 칸 채움 &gt; p2 보존 &gt; 역할 &gt; 넘침 &gt; 순서·짧음」의 우선순위가 나오게 정했습니다. p2 버림 비용을 역할 벌점보다 낮추면 t08×c07에서 기간·본문을 캡션 칸에 넣는 대신 버립니다.</p>
+  <p><strong>「cost 가중치는 어떻게 정했고, 바꾸면 어떻게 되나요?」</strong> 「p1 보존 ≫ 제목 칸 채움 &gt; p2 보존 &gt; 역할 &gt; 넘침 &gt; 순서·짧음」의 우선순위가 나오게 정했습니다. p2 버림 비용을 역할 벌점보다 낮추면 t08×c07에서 기간·본문을 캡션 칸에 넣는 대신 버립니다. 전체로는 <code>pnpm bench:sweep</code>으로 봤습니다. 가장 민감한 것은 역할 벌점(배치가 달라진 횟수 85), 전혀 영향 없는 것은 p1 버림 비용과 제목 비움 비용입니다.</p>
   <p><strong>「Hungarian의 시간 복잡도는? 칸이 1,000개라면?」</strong> 표 크기 N = 항목 + 칸에 대해 O(N³)입니다. N = 2,000이면 약 8×10⁹번 연산이라 수 초 단위입니다. 카드 단위로 나누는 계층 매칭이 문제를 작게 쪼개는 효과도 있습니다.</p>
   <p><strong>「Hungarian이 맞다는 걸 어떻게 확인했나요?」</strong> 모든 경우를 시도하는 bruteForce와 무작위 입력 수백 개에서 totalCost가 같은지 fast-check로 비교합니다.</p>
-  <p><strong>「계층 매칭이 최적이 아닌 경우는? 왜 감수했나요?」</strong> t09×c09에서 카드가 칸을 다 차지해 p1 제목이 버려집니다(1007.5 대 56.5). 카드 찢어짐은 짝별 점수로 표현할 수 없고, 이 실패는 priorityDropped error로 거절되어 드러납니다.</p>
+  <p><strong>「계층 매칭이 최적이 아닌 경우는? 왜 감수했나요?」</strong> t09×c09에서 1~4단계만 돌면 카드가 칸을 다 차지해 p1 제목이 버려집니다(1007.5 대 56.5). 카드 찢어짐은 짝별 점수로 표현할 수 없어서 구조로 막는 쪽을 골랐습니다. p1을 잃는 경우는 5단계에서 카드를 찢지 않는 flat 해로 물러나게 했고, p2 · 3만 손해 보는 비최적은 감수했습니다.</p>
   <p><strong>「invariant와 validation 규칙의 차이는?」</strong> invariant가 깨지면 코드 버그(테스트 실패), 규칙이 깨지면 결과물의 품질 문제(대응하거나 거절)입니다.</p>
-  <p><strong>「무엇을 거절했나요?」</strong> error가 남은 결과입니다. p1 본문 12개(c10), 줄여도 안 들어가는 p1 고지문(c11), 그리고 F-7 경우입니다.</p>
+  <p><strong>「무엇을 거절했나요?」</strong> error가 남은 결과입니다. p1 본문 12개(c10)와 줄여도 안 들어가는 p1 고지문(c11)입니다. hierarchical 기준 99쌍 중 15쌍입니다.</p>
   <p><strong>「golden의 주관성은?」</strong> 정답은 Claude가 「디자이너라면」 기준으로 썼고 파일마다 판단 근거를 note에 남겼습니다. 카드 순서 차이는 오답으로 세지 않습니다(D-7).</p>
 </section>
 </main>

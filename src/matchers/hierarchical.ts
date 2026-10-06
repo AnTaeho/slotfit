@@ -13,14 +13,20 @@
 //      슬롯을 전부 비운다고 비관적으로 값을 매긴다(실제로는 4)에서 낱개로 자리를 찾을 수 있다).
 //   3) 짝지어진 그룹 쌍은 1)의 하위 문제 결과를 그대로 쓴다. 그 안에서 버린 항목·비운 슬롯은 확정한다.
 //   4) 남은 항목(groupId 없음 + 짝 없는 그룹)과 남은 슬롯(그룹 밖 + 짝 없는 그룹)을 flat하게 한 번 더 푼다.
+//   5) 1)~4)의 결과가 priority 1 항목을 버렸으면 flat 해(전체를 한 번에 푸는 hungarian과 같은 풀이)를 구해 본다.
+//      flat 해가 버린 priority 1 수가 더 적고 찢어진 카드가 하나도 없을 때만 flat 해로 물러난다(D-28).
+//      그 밖에는 1)~4)의 결과를 그대로 낸다.
 //
 // 전역 최적이 아닐 수 있다: 2)의 dummy 값이 비관적이고, 3)에서 그룹 쌍 결과를 확정한 뒤 4)를 푼다.
-// 예: 카드 한 장뿐인 템플릿에 「제목 + 카드 한 장」 콘텐츠(t09×c09). 카드가 카드 자리를 다 차지해 제목은
-// 갈 곳이 없어 버려진다(1000). flat hungarian은 제목을 카드 소제목 칸에 넣고 소제목(30)을 버려 더 싸다.
+// 5)는 priority 1을 잃는 경우에만 물러나므로, priority 2·3만 손해 보는 비최적은 그대로 남는다.
+// 예: 카드 한 장뿐인 템플릿에 「제목 + 카드 한 장」 콘텐츠(t09×c09). 1)~4)만 돌면 카드가 카드 자리를 다 차지해
+// 제목은 갈 곳이 없어 버려진다(1000). flat 해는 제목을 카드 소제목 칸에 넣고 소제목(30)을 버린다.
+// 이 flat 해는 카드를 찢지 않으므로 5)에서 이쪽을 낸다(F-7).
 //
 // 가정: 그룹이 중첩되면 ctx.slotGroup은 가장 안쪽 그룹을 가리킨다. 그래서 그룹마다 「직접」 속한 슬롯만 보고,
 // 바깥 그룹과 안쪽 그룹은 서로 다른 템플릿 그룹으로 따로 짝짓는다. 직접 슬롯이 없는 그룹은 짝짓기에서 뺀다.
 import type { MatchContext } from '../context';
+import { findSplitGroups } from '../grouping';
 import type { ContentItem, MatchResult, Slot } from '../schema';
 import { DUMMY_ITEM_COST, DUMMY_SLOT_COST } from '../scoring/cost';
 import type { Weights } from '../scoring/weights';
@@ -80,7 +86,8 @@ function pairGroups(
   return solveAssignment([...groupRows, ...dummyRows]).slice(0, contentGroups.length);
 }
 
-function match(ctx: MatchContext): MatchResult {
+// 1)~4): 그룹끼리 짝짓고 그룹 안을 채운 뒤 남은 것을 flat하게 푼다.
+function matchLayered(ctx: MatchContext): MatchResult {
   const contentGroups = collectContentGroups(ctx);
   const templateGroups = collectTemplateGroups(ctx);
 
@@ -114,6 +121,21 @@ function match(ctx: MatchContext): MatchResult {
   const rest = solveSubproblem(ctx, restItems, restSlots);
 
   return toMatchResult(ctx, [...settled, rest]);
+}
+
+const droppedPriorityOne = (ctx: MatchContext, result: MatchResult): number =>
+  result.dropped.filter((contentId) => ctx.itemsById[contentId]?.priority === 1).length;
+
+// 5) 계층 결과가 priority 1을 버렸을 때만 flat 해와 견준다(D-28).
+// flat 해가 priority 1을 더 적게 버리고 카드를 하나도 찢지 않으면 flat 해, 아니면 계층 결과.
+function match(ctx: MatchContext): MatchResult {
+  const layered = matchLayered(ctx);
+  const layeredLost = droppedPriorityOne(ctx, layered);
+  if (layeredLost === 0) return layered;
+
+  const flat = toMatchResult(ctx, [solveSubproblem(ctx, ctx.content.items, ctx.slots)]);
+  const flatKeepsCards = findSplitGroups(ctx, flat.assignment).length === 0;
+  return droppedPriorityOne(ctx, flat) < layeredLost && flatKeepsCards ? flat : layered;
 }
 
 export const hierarchical: Matcher = { name: 'hierarchical', match };

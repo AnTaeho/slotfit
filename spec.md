@@ -137,6 +137,7 @@ slotfit/
 │  ├─ io/loader.ts            # fixture 로드 + 검증
 │  ├─ tree/traverse.ts        # 슬롯/그룹 수집
 │  ├─ context.ts              # buildContext
+│  ├─ grouping.ts             # 찢어진 카드 찾기 (Step 7, matcher·validation·fallback 공용)
 │  ├─ text/measure.ts         # 텍스트 줄 수 근사
 │  ├─ scoring/
 │  │  ├─ weights.ts           # 모든 가중치/임계값
@@ -156,7 +157,9 @@ slotfit/
 │  │     ├─ titleMissing.ts   # Step 4
 │  │     ├─ priorityDropped.ts # Step 4
 │  │     ├─ groupSplit.ts     # Step 3
-│  │     └─ roleMismatch.ts   # Step 4
+│  │     ├─ roleMismatch.ts   # Step 4
+│  │     ├─ contentDropped.ts # Step 7
+│  │     └─ emptySlot.ts      # Step 7
 │  ├─ fallback/
 │  │  ├─ types.ts
 │  │  ├─ policy.ts
@@ -539,9 +542,9 @@ README 구성:
 | F-4 | 맞는 자리인데 넘침 | 제목이 제목 칸에 들어갔지만 기본 글자 크기에서 한 줄을 넘는다. 글자를 줄이면 들어간다 | 사후 | t02×c03, t03×c03 | greedy | Step 4 해결: shrinkFont가 제목을 32→22로 줄여 overflow가 사라지고 degraded(D-22) |
 | F-5 | 틀린 배치가 통과 | role이 다 틀린 배치(t04×c05)도 overflow만 없으면 accepted가 된다 | 사후 | t04×c05, t03×c08 | greedy | Step 4 해결: roleMismatch warn으로 degraded가 된다. 카드 섞임은 groupSplit error로 rejected |
 | F-6 | priority와 role의 충돌 | p2 소제목·본문을 버리는 비용(30)이 role 불일치(20+α)보다 커서, p3 캡션을 버리고 기간·본문을 사진 캡션 칸에 넣는다. 캡션 칸에서 본문이 넘친다 | 사후 | t08×c07 | hungarian | Step 4에서 roleMismatch warn·overflow error로 드러난다. hierarchical은 카드를 지켜 캡션을 살린다(t08×c07 accepted) |
-| F-7 | 카드가 제목 자리를 뺏음 | 카드 하나뿐인 템플릿에서 계층 매칭은 카드를 먼저 짝지어 슬롯을 다 쓰고, 남은 p1 제목을 버린다(totalCost 1007.5 vs hungarian 56.5) | 구조 | t09×c09 (t09×c01·c05도) | hierarchical | Step 3에서 발견, 감수(D-19). Step 4: priorityDropped error로 t09×c01·c05·c09가 rejected |
-| F-8 | 버림이 찢어짐을 가림 | 카드를 찢은 항목이 넘쳐 dropLowPriority가 그 항목을 버리면 groupSplit error도 함께 사라져 rejected가 degraded로 바뀐다 | 사후 | t01×c01 | greedy (+fallback) | Step 4에서 발견. 미해결: 버린 이유를 trace로만 알 수 있음. 「fallback이 groupSplit을 없애면 안 된다」 규칙은 다음 일로 남김 |
-| F-9 | 고지문이 소제목 칸으로 | 넘침 비용을 줄 수로 매겨, 아주 긴 본문은 좁은 본문 칸(넘치는 줄 ~11)보다 넓은 소제목 칸(~6줄 + role 20)에 넣는 쪽이 싸다 | cost | t05×c11 | hierarchical | Step 4에서 발견. 결과는 어차피 rejected라 그대로 둠. 넘침을 비율로 매기는 안은 다음 일 |
+| F-7 | 카드가 제목 자리를 뺏음 | 카드 하나뿐인 템플릿에서 계층 매칭은 카드를 먼저 짝지어 슬롯을 다 쓰고, 남은 p1 제목을 버린다(totalCost 1007.5 vs hungarian 56.5) | 구조 | t09×c09 (t09×c01·c05도) | hierarchical | Step 3에서 발견, 감수(D-19). Step 4: priorityDropped error로 t09×c01·c05·c09가 rejected. **Step 7 해결(D-28)**: p1을 잃으면 카드를 찢지 않는 flat 해로 물러난다. t09×c01·c05·c09가 rejected → degraded |
+| F-8 | 버림이 찢어짐을 가림 | 카드를 찢은 항목이 넘쳐 dropLowPriority가 그 항목을 버리면 groupSplit error도 함께 사라져 rejected가 degraded로 바뀐다 | 사후 | t01×c01 | greedy (+fallback) | Step 4에서 발견. 미해결: 버린 이유를 trace로만 알 수 있음. 「fallback이 groupSplit을 없애면 안 된다」 규칙은 다음 일로 남김. **Step 7 해결(D-29)**: dropLowPriority가 찢어진 카드의 항목을 버리지 않는다. greedy t01×c01이 다시 rejected(groupSplit 9 → 10) |
+| F-9 | 고지문이 소제목 칸으로 | 넘침 비용을 줄 수로 매겨, 아주 긴 본문은 좁은 본문 칸(넘치는 줄 ~11)보다 넓은 소제목 칸(~6줄 + role 20)에 넣는 쪽이 싸다 | cost | t05×c11 | hierarchical | Step 4에서 발견. 결과는 어차피 rejected라 그대로 둠. 넘침을 비율로 매기는 안은 다음 일. Step 7에서도 고치지 않기로 함(D-30) |
 
 ## 부록 B. 결정 로그
 
@@ -572,6 +575,11 @@ README 구성:
 | D-23 | `FallbackStep.applies(v, ctx, r, adj)`로 인자를 늘림 (Claude 결정, Step 4) | 인자 추가 / 위반만 | 이미 minFontSize인 슬롯에 shrinkFont가 헛돌지 않으려면 현재 글자 크기를 봐야 한다 |
 | D-24 | 마지막에 동작 불변 가독성 리팩터링 (Claude 결정, 2026-10-05) | 리팩터링 / 그대로 | 사용자 요청. spec 3.4 계약 이름은 유지하고 내부 이름·함수 분리·중복 제거만 했다(MatchContext에 `slotsById` 추가, 행렬 이중 생성 제거, `costBreakdown` 삭제). bench(ms 제외)·SVG 전체·trace가 전후 글자 하나까지 같음을 diff로 확인. Hungarian 본체의 표준 표기(u, v, p, way, minv)는 주석과 짝이라 유지 |
 | D-25 | cost 가중치를 `Weights` 묶음으로 만들어 `MatchContext.weights`로 싣고 `buildContext`·`run`·`DUMMY_*_COST`가 선택 인자로 받는다. `pnpm bench:sweep`이 가중치 하나씩을 ×0.5·×2로 바꿔 99쌍을 다시 돌린다 (Claude 결정, 2026-10-06) | 인자로 주입 / 상수 그대로 두고 파일을 고쳐 실험 | 「가중치를 바꾸면 결과가 어떻게 달라지나」를 표 한 장으로 답하려고. 기본값은 그대로라 동작 불변(bench의 ms 외 숫자·SVG 297장 전후 동일). 3.3·3.4의 시그니처에 선택 인자가 하나씩 늘었다. 가중치 값 자체(D-14)는 건드리지 않았다 |
+| D-26 | priority 2 콘텐츠가 버려지면 warn(`contentDropped`). priority 3은 버려도 위반 아님 (Claude 결정 — 🙋 사용자 위임, 2026-10-06) | p2 유실 warn / 버린 개수 임계값 / 그대로 | t02×c05가 8개 중 7개를 버리고 accepted였다. D-22의 accepted 뜻(「손대지 않고 그대로 써도 됨」)에 맞춘다. 임계값은 숫자를 또 정하고 설명해야 해서 버렸다 |
+| D-27 | 제목이 아닌 슬롯이 하나라도 비면 warn(`emptySlot`) (Claude 결정 — 🙋 사용자 위임, 2026-10-06) | 한 칸부터 warn / 빈 칸 비율 임계값 / 그대로 | t04×c01이 10칸 중 5칸이 빈 채 accepted였다. 감수한 점: accepted가 hierarchical 43 → 4로 줄어 status만으로는 matcher 차이가 작게 보인다. 99쌍이 전부 엇갈려 짝지은 것이라 칸 수와 항목 수가 맞는 쌍이 드물기 때문. matcher 비교는 goldenMatch·groupSplit·rejected로 읽는다 |
+| D-28 | 계층 매칭이 priority 1을 버렸을 때만 flat 해를 구해, flat 해가 p1을 더 적게 버리고 찢어진 카드가 0이면 그쪽을 낸다 (Claude 결정 — 🙋 사용자 위임, 2026-10-06. D-19의 「감수」를 좁힘) | 조건부로 물러남 / 감수 유지 / 항상 더 싼 쪽 | hungarian은 degraded인 t09 3쌍을 계층 매칭만 거절했다(F-7). 조건을 p1 유실로 좁혀 카드를 찢지 않는 성질(groupSplit 0)은 그대로. p2·p3만 손해 보는 비최적은 남는다. p1을 버린 쌍에서 풀이를 한 번 더 한다 |
+| D-29 | dropLowPriority는 지금 찢어진 groupId에 속한 항목을 버리지 않는다 (Claude 결정 — 🙋 사용자 위임, 2026-10-06) | 후보에서 제외 / 처음 위반을 끝까지 기억 | 버림이 groupSplit error를 지워 rejected가 degraded로 바뀌던 것을 막는다(F-8). 판정을 `src/grouping.ts`의 `findSplitGroups`로 뽑아 matcher·validation·fallback이 함께 쓴다 |
+| D-30 | F-9(넘침을 줄 수로 매겨 긴 본문이 소제목 칸으로 감)는 고치지 않는다 (Claude 결정 — 🙋 사용자 위임, 2026-10-06) | 그대로 / 넘침을 비율로 | 해당 쌍은 어차피 rejected이고, sweep에서 넘침 줄당 비용은 ×0.5·×2에도 99쌍 중 0~1쌍만 달라졌다. cost 식을 바꾸면 D-14 가중치를 다시 맞춰야 한다 |
 
 ## 부록 C. 진행 상황
 
@@ -582,4 +590,5 @@ README 구성:
 - 브랜치 메모: 이 저장소의 클라우드 세션은 지정 브랜치 하나에만 푸시할 수 있어, Step마다 로컬 `step-N-*` 브랜치를 `--no-ff`로 세션 브랜치 `claude/lucid-bell-n2rc8s`에 합쳐 Step 경계를 남겼다. `main` 병합(PR)은 사용자가 한다
 - 마무리(2026-10-05): README·가이드에 구조도 추가, 동작 불변 가독성 리팩터링(D-24). `pnpm test` 40 통과, typecheck 0, bench 숫자 변화 없음
 - 다듬기(2026-10-06, 브랜치 `step-6-polish`): 중간 bench 결과·Step 0 가이드 초안 삭제, bench ms를 중앙값으로, measure·cost·규칙 단위 테스트(테스트 40 → 85), 가중치 주입과 `pnpm bench:sweep`(D-25), GitHub Actions CI, README에 t04×c05 세 matcher 그림과 민감도 요약. 엔진 동작은 그대로(bench의 ms 외 숫자·SVG 전후 동일). Step 1~5는 PR #1로 `main`에 합침
-- 다음 할 일: 사용자가 위임 결정을 검토(부록 A 분류, D-10·D-13·D-14·D-19~D-22), 설명 리허설. 정책 결정이 필요한 개선: p2 버림·빈 슬롯이 accepted로 통과하는 문제, F-7(계층 매칭이 p1 제목을 버림), F-8, F-9. 그 뒤 가이드(`docs/guide/slotfit-guide.html`)를 새 테스트 수·ms·`weights` 인자·sweep·CI에 맞춰 갱신
+- 판정 기준 보완(2026-10-06, 브랜치 `step-7-policy`): `contentDropped`·`emptySlot` warn(D-26, D-27), 계층 매칭 5단계(D-28, F-7), 찢어진 카드 항목은 버리지 않음(D-29, F-8), F-9는 그대로(D-30). 사용자가 「알아서 정하라」고 위임해 Claude가 정했다. 최종 bench(99쌍): greedy 0.43 · groupSplit 10 · 1/63/35, hungarian 0.75 · 6 · 3/76/20, hierarchical 0.89 · 0 · 4/80/15. `pnpm test` 102 통과, typecheck 0. 가이드(`docs/guide/slotfit-guide.html`)도 Step 6·7까지 갱신
+- 다음 할 일(전부 사용자 몫): 위임 결정 검토(부록 A 분류, D-10·D-13·D-14·D-19~D-22·D-26~D-30) — 특히 D-27은 accepted를 크게 줄이므로 뒤집을지 볼 것, D-19 이유를 자기 말로 쓰기, README 9장 「직접 판단한 것」 갱신, 설명 리허설
