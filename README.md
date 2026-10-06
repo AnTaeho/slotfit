@@ -1,5 +1,7 @@
 # SlotFit
 
+![CI](https://github.com/AnTaeho/slotfit/actions/workflows/ci.yml/badge.svg)
+
 구조가 다른 콘텐츠를 디자인 템플릿의 빈칸(slot)에 배치하고, 그 결과를 써도 되는지 판정하는 TypeScript 엔진.
 
 ```
